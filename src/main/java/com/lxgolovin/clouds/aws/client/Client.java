@@ -5,7 +5,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 
 public class Client {
 
-    private static Region DEFAULT_AWS_REGION = Region.US_EAST_1;
+//    private static Region DEFAULT_AWS_REGION = Region.US_EAST_1;
+    private static Region DEFAULT_AWS_REGION = Region.EU_CENTRAL_1;
 
     public static S3Client getS3Client() {
         return getS3Client(DEFAULT_AWS_REGION);

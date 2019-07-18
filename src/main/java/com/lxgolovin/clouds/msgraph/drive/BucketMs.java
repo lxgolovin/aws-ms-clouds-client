@@ -2,6 +2,7 @@ package com.lxgolovin.clouds.msgraph.drive;
 
 import com.lxgolovin.clouds.filesystem.DriveNode;
 import com.lxgolovin.clouds.msgraph.auth.AuthenticateInsecure;
+import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.GraphServiceException;
 import com.microsoft.graph.models.extensions.DriveItem;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
@@ -53,10 +54,12 @@ public class BucketMs {
                     .buildRequest()
                     .get()
                     .getCurrentPage();
+
+
             driveItems.stream()
                     .filter(di -> di.name.matches(regex))
                     .forEach(di -> msBucket.add(File.msDriveItemToNode(di)));
-        } catch (GraphServiceException e) {
+        } catch (ClientException e) {
             logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
         }
 

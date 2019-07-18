@@ -91,8 +91,12 @@ public class File {
     }
 
     public boolean upload(InputStream inputStream, String fileName) {
-        if ((inputStream == null) || (fileName == null))  {
+        if (fileName == null)  {
             throw new IllegalArgumentException();
+        }
+
+        if (inputStream == null) {
+            return false;
         }
 
         boolean uploadResult = false;

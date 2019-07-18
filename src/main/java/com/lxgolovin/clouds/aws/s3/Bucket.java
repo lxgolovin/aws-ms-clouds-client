@@ -4,6 +4,7 @@ import com.lxgolovin.clouds.aws.client.Client;
 import com.lxgolovin.clouds.filesystem.DriveNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -76,16 +77,18 @@ public class Bucket {
         return s3Bucket;
     }
 
-    public InputStream getFile(DriveNode file) {
+//    public InputStream getFile(DriveNode file) {
+    public ResponseInputStream getFile(DriveNode file) {
         isIllegalNull(file);
         if (!s3Bucket.contains(file)) {
             throw new IllegalArgumentException();
         }
 
-        InputStream inputStream = null;
+        ResponseInputStream responseInputStream = null;
+//        InputStream inputStream = null;
 
         if (!file.isFolder()) {
-            inputStream = s3.getObject(GetObjectRequest
+            responseInputStream= s3.getObject(GetObjectRequest
                             .builder()
                             .bucket(bucket)
                             .key(file.getPath())
@@ -93,7 +96,8 @@ public class Bucket {
                     ResponseTransformer.toInputStream());
         }
 
-        return inputStream;
+//        return inputStream;
+        return responseInputStream;
     }
 
     public boolean saveFileLocally(DriveNode file) {
