@@ -14,6 +14,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 
 public class AuthenticateInsecure {
@@ -71,7 +73,13 @@ public class AuthenticateInsecure {
 
         try {
             URL url = new URL(tokenEndpoint);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            HttpURLConnection conn;
+            if (Constants.USE_PROXY) {
+                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Constants.DEFAULT_PROXY_SERVER, Constants.DEFAULT_PROXY_PORT));
+                conn = (HttpURLConnection) url.openConnection(proxy);
+            } else {
+                conn = (HttpURLConnection) url.openConnection();
+            }
 
             String line;
             StringBuilder jsonString = new StringBuilder();
