@@ -1,0 +1,76 @@
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'java'
+    id 'application'
+    // id "com.github.johnrengelman.shadow" version "5.1.0"
+}
+
+ext {
+    awssdkVersion = "2.7.2"
+    msGraphVersion = "1.4.0"
+    logbackVersion = "1.2.3"
+    slf4jVersion = "1.7.5"
+    commonsCliVersion = "1.4"
+
+    junitVersion = "5.4.2"
+
+    archiverVersion = "Plexus Archiver"  // TODO: need to fill in correctly. default maven field
+    builtBy = System.properties['user.name']
+    createdBy = "Gradle ${gradle.gradleVersion}"
+    buildJdk = "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})"
+    buildOS = "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+    buildTimestamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date())
+}
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+
+mainClassName = "com.lxgolovin.msgraph.client.App"
+
+jar {
+    manifest {
+        attributes(
+                'Archiver-Version'      : archiverVersion,
+                'Created-By'            : createdBy,
+                'Build-Jdk'             : buildJdk,
+                'Build-OS'              : buildOS,
+                'Build-Timestamp'       : buildTimestamp,
+                'Main-Class'            : mainClassName
+        )
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    implementation("software.amazon.awssdk:s3:$awssdkVersion")
+    implementation("commons-cli:commons-cli:$commonsCliVersion")
+    implementation("com.microsoft.graph:microsoft-graph:$msGraphVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+//        events "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+wrapper {
+    gradleVersion = '5.4.1'
+}
