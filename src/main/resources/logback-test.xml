@@ -29,7 +29,7 @@
 
     </appender>
 
-    <logger level="debug"
+    <logger name="com.lxgolovin.clouds" level="debug"
             additivity="false">
         <appender-ref ref="FILE-ROLLING"/>
         <appender-ref ref="STDOUT"/>
