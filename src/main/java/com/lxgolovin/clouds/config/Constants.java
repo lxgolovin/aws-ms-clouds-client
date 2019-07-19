@@ -14,10 +14,4 @@ public final class Constants {
     public static final int DEFAULT_AWS_S3_CHUNK_SIZE = 8 * 1024 * 1024;
 
     public static final int MAXIMUM_AWS_S3_CHUNK_SIZE = Integer.MAX_VALUE - 8;
-
-    public static boolean USE_PROXY = false;
-
-    public static String DEFAULT_PROXY_SERVER = "proxy-qa.aws.wiley.com";
-
-    public static int DEFAULT_PROXY_PORT = 8080;
 }

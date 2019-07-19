@@ -62,7 +62,6 @@ public class BucketOneDrive {
                     .get()
                     .getCurrentPage();
 
-
             driveItems.stream()
                     .filter(di -> di.name.matches(regex))
                     .forEach(di -> bucketItems.add(msDriveItemToNode(di)));

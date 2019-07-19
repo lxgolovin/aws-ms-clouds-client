@@ -53,7 +53,7 @@ public class Configuration {
 
         this.proxyServer = oAuthProperties.getProperty(PROXY_SERVER);
         this.proxyPort = Integer.valueOf(oAuthProperties.getProperty(PROXY_PORT));
-        this.isProxyUsed = (oAuthProperties.getProperty(PROXY_USE).startsWith("YES"));
+        this.isProxyUsed = (oAuthProperties.getProperty(PROXY_USE).equals("YES"));
     }
 
     private void readConfigFile(Path configFilePath) {
