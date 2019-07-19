@@ -1,4 +1,10 @@
 user.login=YOUR_LOGIN
 user.password=YOUR_PASSWORD
+
 app.id=YOUR_APP_ID
 app.scopes=User.Read,Calendars.Read,Files.Read.All, Files.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
+
+# proxy.use=YES
+proxy.use=NO
+proxy.server=proxy-server.com
+proxy.port=8080

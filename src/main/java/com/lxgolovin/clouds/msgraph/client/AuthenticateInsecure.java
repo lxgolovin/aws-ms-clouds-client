@@ -2,8 +2,8 @@ package com.lxgolovin.clouds.msgraph.client;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.lxgolovin.clouds.msgraph.config.Configuration;
-import com.lxgolovin.clouds.msgraph.config.Constants;
+import com.lxgolovin.clouds.config.Configuration;
+import com.lxgolovin.clouds.config.Constants;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.core.DefaultClientConfig;
 import com.microsoft.graph.core.IClientConfig;
@@ -30,8 +30,9 @@ class AuthenticateInsecure {
 
     private IGraphServiceClient graphClient = null;
 
+    private final Configuration configuration = new Configuration();
+
     AuthenticateInsecure() {
-        Configuration configuration = new Configuration();
         this.clientId = configuration.getAppId();
         this.username = configuration.getLogin();
         this.password = configuration.getPassword();
@@ -71,8 +72,8 @@ class AuthenticateInsecure {
         try {
             URL url = new URL(tokenEndpoint);
             HttpURLConnection conn;
-            if (Constants.USE_PROXY) {
-                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Constants.DEFAULT_PROXY_SERVER, Constants.DEFAULT_PROXY_PORT));
+            if (configuration.isProxyUsed()) {
+                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(configuration.getProxyServer(), configuration.getProxyPort()));
                 conn = (HttpURLConnection) url.openConnection(proxy);
             } else {
                 conn = (HttpURLConnection) url.openConnection();

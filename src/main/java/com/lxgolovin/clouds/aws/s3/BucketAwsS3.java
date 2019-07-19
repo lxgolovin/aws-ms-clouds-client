@@ -1,7 +1,7 @@
 package com.lxgolovin.clouds.aws.s3;
 
 import com.lxgolovin.clouds.aws.client.Client;
-import com.lxgolovin.clouds.aws.config.Constants;
+import com.lxgolovin.clouds.config.Constants;
 import com.lxgolovin.clouds.cloudfs.core.BucketItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
