@@ -39,7 +39,7 @@ public class BucketAwsS3 {
     }
 
     BucketAwsS3(S3Client s3Client, String bucketName) {
-        ifIllegalNull(bucketName, "BucketAwsS3 name cannot be null");
+        ifIllegalNull(bucketName, "Bucket name cannot be null");
 
         this.s3 = (s3Client == null) ? Client.getS3Client() : s3Client;
         this.bucket = bucketName;
@@ -81,7 +81,7 @@ public class BucketAwsS3 {
     }
 
     public InputStream readBucketItem(BucketItem bucketItem) {
-        ifIllegalNull(bucketItem, "BucketAwsS3 item cannot be null");
+        ifIllegalNull(bucketItem, "Bucket item cannot be null");
 
         if (!bucketItems.contains(bucketItem)) {
             throw new IllegalArgumentException("Item is not present in the bucket");
@@ -101,7 +101,7 @@ public class BucketAwsS3 {
         } else {
             targetInputStream = new BufferedInputStream(responseResponseInputStream, Constants.DEFAULT_AWS_S3_CHUNK_SIZE);
         }
-        logger.debug("BucketOneDrive {} buffered", bucketItem.getPath());
+        logger.debug("File {} buffered", bucketItem.getPath());
 
         return targetInputStream;
     }
@@ -148,7 +148,7 @@ public class BucketAwsS3 {
                 isSaved = createLocalFolder(saveAs);
             }
         } catch (IOException | SdkException e) {
-            logger.error("Cannot save file '{}' to file '{}': BucketOneDrive exists {}", sourcePath, saveAs, e.getLocalizedMessage());
+            logger.error("Cannot save file '{}' to file '{}': File exists {}", sourcePath, saveAs, e.getLocalizedMessage());
         }
 
         return isSaved;

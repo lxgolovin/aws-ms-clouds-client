@@ -10,7 +10,7 @@
     </appender>
 
     <appender name="FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <bucketOneDrive>${LOG_HOME}/debug.log</bucketOneDrive>
+        <file>${LOG_HOME}/debug.log</file>
         <Append>true</Append>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
@@ -32,10 +32,6 @@
     <logger name="com.lxgolovin.clouds" level="debug"
             additivity="false">
         <appender-ref ref="FILE-ROLLING"/>
-    </logger>
-
-    <logger name="com.lxgolovin.clouds.app" level="info"
-            additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
 

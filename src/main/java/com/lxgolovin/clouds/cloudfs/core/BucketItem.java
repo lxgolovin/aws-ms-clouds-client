@@ -12,6 +12,10 @@ public final class BucketItem {
 
     private final String parentBucket;
 
+    public BucketItem(String path) {
+        this(null, path, -1, true);
+    }
+
     public BucketItem(String parentBucket, String path, long size, boolean isFile) {
         if (isNull(path)) {
             throw new IllegalArgumentException();

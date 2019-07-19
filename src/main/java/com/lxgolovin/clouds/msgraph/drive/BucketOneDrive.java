@@ -73,21 +73,22 @@ public class BucketOneDrive {
         return bucketItems;
     }
 
-    BucketItem getFileInfo(String file) {
-        DriveItem resultDriveItem = null;
+    public BucketItem getFileInfo(String file) {
+        BucketItem bucketItem;
         try {
-            resultDriveItem =  graphClient
+            bucketItem = msDriveItemToNode(graphClient
                     .me()
                     .drive()
                     .items(bucket)
                     .itemWithPath(file)
                     .buildRequest()
-                    .get();
+                    .get());
         } catch (GraphServiceException e) {
             logger.error("Cannot get file {} info: {}", file, e.getResponseMessage());
+            bucketItem = new BucketItem(file); // create empty BucketItem
         }
 
-        return msDriveItemToNode(resultDriveItem);
+        return bucketItem;
     }
 
     private BucketItem msDriveItemToNode(DriveItem resultDriveItem) {
@@ -162,7 +163,7 @@ public class BucketOneDrive {
         } catch (IOException e) {
             logger.error("IO error during file upload {}. Try later. {}", fileName, e.getLocalizedMessage());
         } catch (GraphServiceException e) {
-            logger.error("BucketOneDrive already exists {}: {}", fileName, e.getResponseMessage());
+            logger.error("File already exists {}: {}", fileName, e.getResponseMessage());
         }
         return uploadResult;
     }
@@ -177,12 +178,12 @@ public class BucketOneDrive {
         @Override
         public void success(final DriveItem result) {
             assert result.id != null;
-            logger.info("BucketOneDrive {} uploaded successfully", result.name);
+            logger.info("File {} uploaded successfully", result.name);
         }
 
         @Override
         public void failure(final ClientException ex) {
-            logger.error("BucketOneDrive failed to upload. {}", ex.getLocalizedMessage());
+            logger.error("File failed to upload. {}", ex.getLocalizedMessage());
         }
     };
 }

@@ -1,7 +1,7 @@
 package com.lxgolovin.clouds.app;
 
 import com.lxgolovin.clouds.aws.s3.BucketManager;
-import com.lxgolovin.clouds.intercloud.Copier;
+import com.lxgolovin.clouds.tasks.Copier;
 import com.lxgolovin.clouds.msgraph.drive.BucketOneDrive;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
@@ -12,8 +12,8 @@ public class App {
 
     private static Logger logger = LoggerFactory.getLogger(App.class);
 
-    //    private static final String DEFAULT_BUCKET_NAME = "aws-bucket-test-new-1";
-    private static final String DEFAULT_BUCKET_NAME = "company-saleselm-10001";
+        private static final String DEFAULT_BUCKET_NAME = "aws-bucket-test-new-1";
+//    private static final String DEFAULT_BUCKET_NAME = "company-saleselm-10001";
 
     private static final String DEFAULT_MSBUCKET_NAME = "01XHM6HBS53JZKPP326VFIRAMG4H56PBXH";
 
@@ -46,7 +46,7 @@ public class App {
                                 logger.debug("Path: '{}'; Size: {}; IsRegularFile: '{}'", fn.getPath(), fn.getSize(), fn.isFile()));
             } else {
                 String bucketName = (cmd.hasOption("b")) ? cmd.getOptionValue("bucket") : DEFAULT_BUCKET_NAME;
-                Copier.copyAwsToMs(bucketName, DEFAULT_MSBUCKET_NAME);
+                new Copier().copyAwsToMs(bucketName, DEFAULT_MSBUCKET_NAME, null);
             }
         } catch (ParseException e) {
             System.out.println(e.getMessage());
