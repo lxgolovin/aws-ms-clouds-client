@@ -1,4 +1,4 @@
-package com.lxgolovin.clouds.msgraph.auth;
+package com.lxgolovin.clouds.msgraph.client;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -18,7 +18,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
 
-public class AuthenticateInsecure {
+class AuthenticateInsecure {
 
     private final String clientId;
 
@@ -30,7 +30,7 @@ public class AuthenticateInsecure {
 
     private IGraphServiceClient graphClient = null;
 
-    public AuthenticateInsecure() {
+    AuthenticateInsecure() {
         Configuration configuration = new Configuration();
         this.clientId = configuration.getAppId();
         this.username = configuration.getLogin();
@@ -39,7 +39,7 @@ public class AuthenticateInsecure {
         GetAuthenticatedClient();
     }
 
-    public AuthenticateInsecure(String appId, String userName, String password) {
+    AuthenticateInsecure(String appId, String userName, String password) {
         this.clientId = appId;
         this.username = userName;
         this.password = password;
@@ -47,9 +47,6 @@ public class AuthenticateInsecure {
         GetAuthenticatedClient();
     }
 
-    public static IGraphServiceClient initGraphClient() {
-        return new AuthenticateInsecure().getGraphClient();
-    }
 
     private void GetAuthenticatedClient() {
         try {
@@ -125,7 +122,7 @@ public class AuthenticateInsecure {
         }
     }
 
-    public IGraphServiceClient getGraphClient() {
+    IGraphServiceClient getGraphClient() {
         return graphClient;
     }
 

@@ -1,7 +1,7 @@
 package com.lxgolovin.clouds.msgraph.drive;
 
-import com.lxgolovin.clouds.filesystem.DriveNode;
-import com.lxgolovin.clouds.msgraph.auth.AuthenticateInsecure;
+import com.lxgolovin.clouds.cloudfs.core.BucketItem;
+import com.lxgolovin.clouds.msgraph.client.Client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,14 +16,14 @@ class BucketMsTest {
 
     @BeforeEach
     void setUp() {
-        Set<DriveNode> driveNodes = bucketMs.readBucket(TestsBase.filter);
-        assertNotNull(driveNodes);
+        Set<BucketItem> bucketItems = bucketMs.readBucket(TestsBase.filter);
+        assertNotNull(bucketItems);
     }
 
     @Test
     void nullChecked() {
         assertThrows(IllegalArgumentException.class, () -> new BucketMs(null));
         assertThrows(IllegalArgumentException.class, () -> new BucketMs(null, null));
-        assertThrows(IllegalArgumentException.class, () -> new BucketMs(AuthenticateInsecure.initGraphClient(), null));
+        assertThrows(IllegalArgumentException.class, () -> new BucketMs(Client.getMsGraphClient(), null));
     }
 }

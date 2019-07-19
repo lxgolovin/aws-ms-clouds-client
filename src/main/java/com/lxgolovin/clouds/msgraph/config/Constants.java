@@ -15,4 +15,6 @@ public final class Constants {
     public static String DEFAULT_PROXY_SERVER = "proxy-qa.aws.wiley.com";
     public static int DEFAULT_PROXY_PORT = 8080;
 
+    public static final int DEFAULT_CHUNK_SIZE = 8 * 1024 * 1024;
+    public static final int MAXIMUM_CHUNK_SIZE = Integer.MAX_VALUE - 8;
 }

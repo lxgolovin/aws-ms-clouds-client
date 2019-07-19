@@ -40,10 +40,10 @@ class FileTest {
         }
 
         assertNotNull(file.getFileInfo(fileName));
-        assertFalse(file.getFileInfo(fileName).isFolder());
+        assertTrue(file.getFileInfo(fileName).isFile());
         assertTrue(file.delete(fileName));
 
-        assertTrue(file.getFileInfo(TestsBase.folderName).isFolder());
+        assertFalse(file.getFileInfo(TestsBase.folderName).isFile());
     }
 
     @Test

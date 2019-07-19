@@ -13,4 +13,6 @@ class TestsBase {
     static final String bucketName = "bucket"; // + UUID.randomUUID();
 
     static final String filter = ".*gradle.*";
+
+    static final String TEMP_FOLDER = "TEMP_FOLDER";
 }

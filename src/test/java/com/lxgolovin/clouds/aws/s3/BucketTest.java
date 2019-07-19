@@ -1,7 +1,7 @@
 package com.lxgolovin.clouds.aws.s3;
 
 import com.lxgolovin.clouds.aws.client.Client;
-import com.lxgolovin.clouds.filesystem.DriveNode;
+import com.lxgolovin.clouds.cloudfs.core.BucketItem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +16,12 @@ class BucketTest {
 
     private final Bucket bucket = new Bucket(Client.getS3Client(TestsBase.region), TestsBase.existingBucketName);
 
-    private Set<DriveNode> driveNodes;
+    private Set<BucketItem> bucketItems;
 
     @BeforeEach
     void setUp() {
-        driveNodes = bucket.readBucket(TestsBase.filter);
-        assertNotNull(driveNodes);
+        bucketItems = bucket.readBucket(TestsBase.filter);
+        assertNotNull(bucketItems);
     }
 
     @Test
@@ -33,12 +33,12 @@ class BucketTest {
 
     @Test
     void readFilesFromBucket() {
-        driveNodes = bucket.readBucket();
-        assertNotNull(driveNodes);
+        bucketItems = bucket.readBucket();
+        assertNotNull(bucketItems);
         assertTrue(bucket.filesCount() >= 0);
         assertTrue(bucket.sizeTotalBytes() >= 0);
 
-        driveNodes.forEach(f -> assertTrue(f.getSize() >= 0));
+        bucketItems.forEach(f -> assertTrue(f.getSize() >= 0));
     }
 
     @Test
@@ -46,28 +46,26 @@ class BucketTest {
         assertTrue(bucket.filesCount() >= 0);
         assertTrue(bucket.sizeTotalBytes() >= 0);
 
-        driveNodes.forEach(f -> assertTrue(f.getSize() >= 0));
+        bucketItems.forEach(f -> assertTrue(f.getSize() >= 0));
     }
 
     @Test
     void saveFileLocally() throws IOException {
-        // driveNodes.forEach(bucket::saveFileLocally);
-        DriveNode driveNode = driveNodes.iterator().next();
+        BucketItem bucketItem = bucketItems.iterator().next();
 
-        Files.deleteIfExists(Paths.get(driveNode.getPath()));
-        assertTrue(bucket.saveFileLocally(driveNode));
-        assertTrue(Files.exists(Paths.get(driveNode.getPath())));
-        Files.deleteIfExists(Paths.get(driveNode.getPath()));
+        Files.deleteIfExists(Paths.get(bucketItem.getPath()));
+        assertTrue(bucket.saveBucketItem(bucketItem));
+        assertTrue(Files.exists(Paths.get(bucketItem.getPath())));
+        Files.deleteIfExists(Paths.get(bucketItem.getPath()));
 
-        String tempFile = "tempFile.txt";
-        Files.deleteIfExists(Paths.get(tempFile));
-        assertTrue(bucket.saveFileLocally(driveNodes.iterator().next(), tempFile));
-        assertTrue(Files.exists(Paths.get(tempFile)));
-        Files.deleteIfExists(Paths.get(tempFile));
+        Files.deleteIfExists(Paths.get(TestsBase.TEMP_FOLDER));
+        assertTrue(bucket.saveBucketItem(bucketItems.iterator().next(), TestsBase.TEMP_FOLDER));
+        assertTrue(Files.exists(Paths.get(TestsBase.TEMP_FOLDER)));
+        // TODO: recursive delete Files.deleteIfExists(Paths.get(TestsBase.TEMP_FOLDER));
     }
 
     @Test
     void getFile() {
-        assertNotNull(bucket.getFile(driveNodes.iterator().next()));
+        assertNotNull(bucket.readBucketItem(bucketItems.iterator().next()));
     }
 }

@@ -1,5 +1,6 @@
-package com.lxgolovin.clouds.msgraph.auth;
+package com.lxgolovin.clouds.msgraph.client;
 
+import com.lxgolovin.clouds.msgraph.client.AuthenticateInsecure;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

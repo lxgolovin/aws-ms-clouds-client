@@ -1,7 +1,7 @@
 package com.lxgolovin.clouds.msgraph.drive;
 
-import com.lxgolovin.clouds.filesystem.DriveNode;
-import com.lxgolovin.clouds.msgraph.auth.AuthenticateInsecure;
+import com.lxgolovin.clouds.cloudfs.core.BucketItem;
+import com.lxgolovin.clouds.msgraph.client.Client;
 import com.microsoft.graph.concurrency.ChunkedUploadProvider;
 import com.microsoft.graph.concurrency.IProgressCallback;
 import com.microsoft.graph.core.ClientException;
@@ -35,10 +35,10 @@ public class File {
         }
 
         this.bucket = bucket;
-        this.graphClient = (graphClient == null) ? AuthenticateInsecure.initGraphClient() : graphClient;
+        this.graphClient = (graphClient == null) ? Client.getMsGraphClient() : graphClient;
     }
 
-    public DriveNode getFileInfo(String file) {
+    BucketItem getFileInfo(String file) {
         DriveItem resultDriveItem = null;
         try {
             resultDriveItem =  graphClient
@@ -55,21 +55,21 @@ public class File {
         return msDriveItemToNode(resultDriveItem);
     }
 
-    static DriveNode msDriveItemToNode(DriveItem resultDriveItem) {
-        DriveNode driveNode = null;
+    static BucketItem msDriveItemToNode(DriveItem resultDriveItem) {
+        BucketItem bucketItem = null;
         if (resultDriveItem != null) {
             String path = resultDriveItem.parentReference.path.replaceAll("(/drive/root:)", "");
             path = path.concat("/").concat(resultDriveItem.name);
             String parentBucket = resultDriveItem.parentReference.driveId;
-            boolean isFolder = (resultDriveItem.folder != null);
+            boolean isFolder = (resultDriveItem.folder == null);
 
-            driveNode = new DriveNode(
+            bucketItem = new BucketItem(
                     parentBucket,
                     path,
                     resultDriveItem.size,
                     isFolder);
         }
-        return driveNode;
+        return bucketItem;
     }
 
     public boolean delete(String file) {
@@ -103,6 +103,7 @@ public class File {
         int fileSize;
 
         try {
+            // fileSize = (size <= 0) ? inputStream.available() : size;
             fileSize = inputStream.available();
 
             UploadSession uploadSession = graphClient
@@ -125,6 +126,8 @@ public class File {
             uploadResult = true;
         } catch (IOException e) {
             logger.error("IO error during file upload {}. Try later. {}", fileName, e.getLocalizedMessage());
+        } catch (GraphServiceException e) {
+            logger.error("File already exists {}: {}", fileName, e.getResponseMessage());
         }
         return uploadResult;
     }
