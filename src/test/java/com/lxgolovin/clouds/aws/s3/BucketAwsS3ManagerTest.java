@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class BucketManagerTest {
+class BucketAwsS3ManagerTest {
 
     private static final S3Client s3 = Client.getS3Client(TestsBase.region);
 

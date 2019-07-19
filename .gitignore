@@ -59,4 +59,3 @@ Thumbs.db
 TEMP/
 oAuth.properties
 logs/
-!libs/aws-to-msgraph.jar

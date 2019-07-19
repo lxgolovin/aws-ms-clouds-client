@@ -1,8 +1,8 @@
 package com.lxgolovin.clouds.aws.s3;
 
 import com.lxgolovin.clouds.aws.client.Client;
+import com.lxgolovin.clouds.aws.config.Constants;
 import com.lxgolovin.clouds.cloudfs.core.BucketItem;
-import com.lxgolovin.clouds.msgraph.config.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -22,24 +22,24 @@ import java.util.Set;
 
 import static java.util.Objects.isNull;
 
-public class Bucket {
+public class BucketAwsS3 {
 
     private final S3Client s3;
 
-    private Set<BucketItem> s3Bucket;
+    private Set<BucketItem> bucketItems;
 
     private final String bucket;
 
     private long bucketSizeTotal;
 
-    private Logger logger = LoggerFactory.getLogger(Bucket.class);
+    private Logger logger = LoggerFactory.getLogger(BucketAwsS3.class);
 
-    public Bucket(String bucket) {
+    public BucketAwsS3(String bucket) {
         this(Client.getS3Client(), bucket);
     }
 
-    Bucket(S3Client s3Client, String bucketName) {
-        ifIllegalNull(bucketName, "Bucket name cannot be null");
+    BucketAwsS3(S3Client s3Client, String bucketName) {
+        ifIllegalNull(bucketName, "BucketAwsS3 name cannot be null");
 
         this.s3 = (s3Client == null) ? Client.getS3Client() : s3Client;
         this.bucket = bucketName;
@@ -54,7 +54,7 @@ public class Bucket {
 
     public Set<BucketItem> readBucket(String filter) {
         String contentFilter = (isNull(filter)) ? ".*" : filter;
-        this.s3Bucket = new HashSet<>();
+        this.bucketItems = new HashSet<>();
         this.bucketSizeTotal = 0;
 
         ListObjectsV2Request listReq = ListObjectsV2Request
@@ -71,19 +71,19 @@ public class Bucket {
                     .forEach(content -> {
                         boolean isFolder = content.key().matches(".*/$");
                         BucketItem bucketItem = new BucketItem(bucket, content.key(), content.size(), !isFolder);
-                        this.s3Bucket.add(bucketItem);
+                        this.bucketItems.add(bucketItem);
                         bucketSizeTotal += content.size();
                     });
         } catch (SdkException e) {
             logger.error("Cannot read bucket {}: {}", bucket, e.toBuilder().message());
         }
-        return s3Bucket;
+        return bucketItems;
     }
 
     public InputStream readBucketItem(BucketItem bucketItem) {
-        ifIllegalNull(bucketItem, "Bucket item cannot be null");
+        ifIllegalNull(bucketItem, "BucketAwsS3 item cannot be null");
 
-        if (!s3Bucket.contains(bucketItem)) {
+        if (!bucketItems.contains(bucketItem)) {
             throw new IllegalArgumentException("Item is not present in the bucket");
         }
 
@@ -96,12 +96,12 @@ public class Bucket {
         int contentLength = responseResponseInputStream.response().contentLength().intValue();
 
         logger.debug("Buffering file '{}'", bucketItem.getPath());
-        if (contentLength < Constants.MAXIMUM_CHUNK_SIZE) {
+        if (contentLength < Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
             targetInputStream = getInputStream(responseResponseInputStream, contentLength);
         } else {
-            targetInputStream = new BufferedInputStream(responseResponseInputStream, Constants.DEFAULT_CHUNK_SIZE);
+            targetInputStream = new BufferedInputStream(responseResponseInputStream, Constants.DEFAULT_AWS_S3_CHUNK_SIZE);
         }
-        logger.debug("File {} buffered", bucketItem.getPath());
+        logger.debug("BucketOneDrive {} buffered", bucketItem.getPath());
 
         return targetInputStream;
     }
@@ -132,7 +132,7 @@ public class Bucket {
 
     boolean saveBucketItem(BucketItem bucketItem, String targetDir) {
         ifIllegalNull(bucketItem, "Source item cannot be null");
-        if (!s3Bucket.contains(bucketItem)) {
+        if (!bucketItems.contains(bucketItem)) {
             throw new IllegalArgumentException("Item is not present in the bucket");
         }
 
@@ -148,7 +148,7 @@ public class Bucket {
                 isSaved = createLocalFolder(saveAs);
             }
         } catch (IOException | SdkException e) {
-            logger.error("Cannot save file '{}' to file '{}': File exists {}", sourcePath, saveAs, e.getLocalizedMessage());
+            logger.error("Cannot save file '{}' to file '{}': BucketOneDrive exists {}", sourcePath, saveAs, e.getLocalizedMessage());
         }
 
         return isSaved;
@@ -187,7 +187,7 @@ public class Bucket {
     }
 
     public int filesCount() {
-        return s3Bucket.size();
+        return bucketItems.size();
     }
 
     public long sizeTotalBytes() {

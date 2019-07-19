@@ -1,8 +1,8 @@
 package com.lxgolovin.clouds.app;
 
 import com.lxgolovin.clouds.aws.s3.BucketManager;
-import com.lxgolovin.clouds.cloudfs.core.Copier;
-import com.lxgolovin.clouds.msgraph.drive.BucketMs;
+import com.lxgolovin.clouds.intercloud.Copier;
+import com.lxgolovin.clouds.msgraph.drive.BucketOneDrive;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +36,11 @@ public class App {
                 new BucketManager()
                         .listBuckets()
                         .forEach(b ->
-                                logger.debug("Bucket: {}", b.name()));
+                                logger.debug("BucketAwsS3: {}", b.name()));
             } else if (cmd.hasOption("B")) {
                 String bucketName = DEFAULT_MSBUCKET_NAME;
                 logger.debug("Read bucket '{}':", bucketName);
-                new BucketMs(bucketName)
+                new BucketOneDrive(bucketName)
                         .readBucket(null)
                         .forEach(fn ->
                                 logger.debug("Path: '{}'; Size: {}; IsRegularFile: '{}'", fn.getPath(), fn.getSize(), fn.isFile()));

@@ -26,6 +26,7 @@ public class BucketManager {
     }
 
     public List<Bucket> listBuckets() {
+        // TODO: need to implement other interface, not using BucketAwsS3 from sdk
         ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
         ListBucketsResponse listBucketsResponse = s3.listBuckets(listBucketsRequest);
 
@@ -45,7 +46,7 @@ public class BucketManager {
 
         try {
             s3.createBucket(createBucketRequest);
-            logger.info("Bucket {} created", bucketName);
+            logger.info("BucketAwsS3 {} created", bucketName);
             isBucketCreated = true;
         } catch (AwsServiceException | SdkClientException e) {
             logger.error("Unable to create bucket {}: {}", bucketName, e.getLocalizedMessage());
@@ -55,16 +56,17 @@ public class BucketManager {
     }
 
     public String getLocation(String bucket) {
+        String location = "";
         try {
-            return s3.getBucketLocation(GetBucketLocationRequest
+            location = s3.getBucketLocation(GetBucketLocationRequest
                     .builder()
                     .bucket(bucket)
                     .build()
             ).locationConstraintAsString();
         } catch (S3Exception e) {
             logger.error("Cannot get location: {}", e.getLocalizedMessage());
-            return null;
         }
+        return location;
     }
 
     boolean deleteBucket(String bucketName) {

@@ -18,7 +18,7 @@ public final class BucketItem {
         }
 
         this.path = path;
-        this.size = (isNull(size)) ? 0 : size;
+        this.size = size;
         this.isFile = isFile;
         this.parentBucket = parentBucket;
     }

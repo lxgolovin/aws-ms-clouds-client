@@ -10,7 +10,7 @@
     </appender>
 
     <appender name="FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_HOME}/debug.log</file>
+        <bucketOneDrive>${LOG_HOME}/debug.log</bucketOneDrive>
         <Append>true</Append>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>

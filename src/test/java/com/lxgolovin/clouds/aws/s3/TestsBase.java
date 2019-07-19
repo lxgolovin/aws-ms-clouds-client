@@ -10,7 +10,7 @@ class TestsBase {
 
     static final String existingBucketName = "company-saleselm-10001";
 
-    static final String bucketName = "bucket"; // + UUID.randomUUID();
+    static final String bucketName = "bucket" + UUID.randomUUID();
 
     static final String filter = ".*gradle.*";
 

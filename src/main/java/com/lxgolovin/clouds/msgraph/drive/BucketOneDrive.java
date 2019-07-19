@@ -16,26 +16,61 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class File {
+import static java.util.Objects.isNull;
+
+public class BucketOneDrive {
+
+    private Set<BucketItem> bucketItems;
 
     private final String bucket;
 
     private final IGraphServiceClient graphClient;
 
-    private Logger logger = LoggerFactory.getLogger(File.class);
+    private Logger logger = LoggerFactory.getLogger(BucketOneDrive.class);
 
-    public File(String bucket) {
+    public BucketOneDrive(String bucket) {
         this(null, bucket);
     }
 
-    File(IGraphServiceClient graphClient, String bucket) {
+    BucketOneDrive(IGraphServiceClient graphClient, String bucket) {
         if (bucket == null) {
             throw new IllegalArgumentException();
         }
 
         this.bucket = bucket;
         this.graphClient = (graphClient == null) ? Client.getMsGraphClient() : graphClient;
+    }
+
+    public Set<BucketItem> readBucket() {
+        return readBucket(null);
+    }
+
+    public Set<BucketItem> readBucket(String filter) {
+        String regex = (isNull(filter)) ? ".*" : filter;
+        this.bucketItems = new HashSet<>();
+        try {
+            List<DriveItem> driveItems =  graphClient
+                    .me()
+                    .drive()
+                    .items(bucket)
+                    .children()
+                    .buildRequest()
+                    .get()
+                    .getCurrentPage();
+
+
+            driveItems.stream()
+                    .filter(di -> di.name.matches(regex))
+                    .forEach(di -> bucketItems.add(msDriveItemToNode(di)));
+        } catch (ClientException e) {
+            logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
+        }
+
+        return bucketItems;
     }
 
     BucketItem getFileInfo(String file) {
@@ -55,7 +90,7 @@ public class File {
         return msDriveItemToNode(resultDriveItem);
     }
 
-    static BucketItem msDriveItemToNode(DriveItem resultDriveItem) {
+    private BucketItem msDriveItemToNode(DriveItem resultDriveItem) {
         BucketItem bucketItem = null;
         if (resultDriveItem != null) {
             String path = resultDriveItem.parentReference.path.replaceAll("(/drive/root:)", "");
@@ -127,7 +162,7 @@ public class File {
         } catch (IOException e) {
             logger.error("IO error during file upload {}. Try later. {}", fileName, e.getLocalizedMessage());
         } catch (GraphServiceException e) {
-            logger.error("File already exists {}: {}", fileName, e.getResponseMessage());
+            logger.error("BucketOneDrive already exists {}: {}", fileName, e.getResponseMessage());
         }
         return uploadResult;
     }
@@ -142,12 +177,12 @@ public class File {
         @Override
         public void success(final DriveItem result) {
             assert result.id != null;
-            logger.info("File {} uploaded successfully", result.name);
+            logger.info("BucketOneDrive {} uploaded successfully", result.name);
         }
 
         @Override
         public void failure(final ClientException ex) {
-            logger.error("File failed to upload. {}", ex.getLocalizedMessage());
+            logger.error("BucketOneDrive failed to upload. {}", ex.getLocalizedMessage());
         }
     };
 }

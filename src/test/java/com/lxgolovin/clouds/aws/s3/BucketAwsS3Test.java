@@ -12,39 +12,39 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class BucketTest {
+class BucketAwsS3Test {
 
-    private final Bucket bucket = new Bucket(Client.getS3Client(TestsBase.region), TestsBase.existingBucketName);
+    private final BucketAwsS3 bucketAwsS3 = new BucketAwsS3(Client.getS3Client(TestsBase.region), TestsBase.existingBucketName);
 
     private Set<BucketItem> bucketItems;
 
     @BeforeEach
     void setUp() {
-        bucketItems = bucket.readBucket(TestsBase.filter);
+        bucketItems = bucketAwsS3.readBucket(TestsBase.filter);
         assertNotNull(bucketItems);
     }
 
     @Test
     void nullChecked() {
-        assertThrows(IllegalArgumentException.class, () -> new Bucket(null));
-        assertThrows(IllegalArgumentException.class, () -> new Bucket(null, null));
-        assertThrows(IllegalArgumentException.class, () -> new Bucket(Client.getS3Client(TestsBase.region), null));
+        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(null));
+        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(null, null));
+        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(Client.getS3Client(TestsBase.region), null));
     }
 
     @Test
     void readFilesFromBucket() {
-        bucketItems = bucket.readBucket();
+        bucketItems = bucketAwsS3.readBucket();
         assertNotNull(bucketItems);
-        assertTrue(bucket.filesCount() >= 0);
-        assertTrue(bucket.sizeTotalBytes() >= 0);
+        assertTrue(bucketAwsS3.filesCount() >= 0);
+        assertTrue(bucketAwsS3.sizeTotalBytes() >= 0);
 
         bucketItems.forEach(f -> assertTrue(f.getSize() >= 0));
     }
 
     @Test
     void readAndFilterFiles() {
-        assertTrue(bucket.filesCount() >= 0);
-        assertTrue(bucket.sizeTotalBytes() >= 0);
+        assertTrue(bucketAwsS3.filesCount() >= 0);
+        assertTrue(bucketAwsS3.sizeTotalBytes() >= 0);
 
         bucketItems.forEach(f -> assertTrue(f.getSize() >= 0));
     }
@@ -54,18 +54,18 @@ class BucketTest {
         BucketItem bucketItem = bucketItems.iterator().next();
 
         Files.deleteIfExists(Paths.get(bucketItem.getPath()));
-        assertTrue(bucket.saveBucketItem(bucketItem));
+        assertTrue(bucketAwsS3.saveBucketItem(bucketItem));
         assertTrue(Files.exists(Paths.get(bucketItem.getPath())));
         Files.deleteIfExists(Paths.get(bucketItem.getPath()));
 
-        Files.deleteIfExists(Paths.get(TestsBase.TEMP_FOLDER));
-        assertTrue(bucket.saveBucketItem(bucketItems.iterator().next(), TestsBase.TEMP_FOLDER));
+        // Files.deleteIfExists(Paths.get(TestsBase.TEMP_FOLDER));
+        assertTrue(bucketAwsS3.saveBucketItem(bucketItems.iterator().next(), TestsBase.TEMP_FOLDER));
         assertTrue(Files.exists(Paths.get(TestsBase.TEMP_FOLDER)));
         // TODO: recursive delete Files.deleteIfExists(Paths.get(TestsBase.TEMP_FOLDER));
     }
 
     @Test
     void getFile() {
-        assertNotNull(bucket.readBucketItem(bucketItems.iterator().next()));
+        assertNotNull(bucketAwsS3.readBucketItem(bucketItems.iterator().next()));
     }
 }
