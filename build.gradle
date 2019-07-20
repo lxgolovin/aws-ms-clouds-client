@@ -53,7 +53,7 @@ dependencies {
     implementation("com.microsoft.graph:microsoft-graph:$msGraphVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
-
+    implementation("com.microsoft.azure:msal4j:0.5.0-preview")
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 }
