@@ -41,7 +41,7 @@ public class App {
                 String bucketName = DEFAULT_MSBUCKET_NAME;
                 logger.debug("Read bucket '{}':", bucketName);
                 new BucketOneDrive(bucketName)
-                        .readBucket(null)
+                        .readBucket()
                         .forEach(fn ->
                                 logger.debug("Path: '{}'; Size: {}; IsRegularFile: '{}'", fn.getPath(), fn.getSize(), fn.isFile()));
             } else {

@@ -107,22 +107,53 @@ public class BucketOneDrive {
         return bucketItem;
     }
 
-    public boolean delete(String file) {
+    public boolean delete(String fileName) {
         boolean deleteResult = false;
         try {
             graphClient
                     .me()
                     .drive()
                     .items(bucket)
-                    .itemWithPath(file)
+                    .itemWithPath(fileName)
                     .buildRequest()
                     .delete();
             deleteResult = true;
         } catch (GraphServiceException e) {
-            logger.error("Cannot delete file {} info: {}", file, e.getResponseMessage());
+            logger.error("Cannot delete file {} info: {}", fileName, e.getResponseMessage());
         }
 
         return deleteResult;
+    }
+
+    public boolean uploadSmall(InputStream inputStream, String fileName) {
+        if (fileName == null)  {
+            throw new IllegalArgumentException();
+        }
+
+        if (inputStream == null) {
+            return false;
+        }
+
+        boolean uploaded = false;
+        try {
+            byte[] buffer = new byte[inputStream.available()];
+            int b = 0;
+            while (b != -1) {
+                b = inputStream.read(buffer);
+            }
+
+            graphClient
+                    .me()
+                    .drive()
+                    .items(bucket)
+                    .itemWithPath(fileName)
+                    .content()
+                    .buildRequest()
+                    .put(buffer);
+        } catch (IOException e) {
+            logger.error("Cannot read content of the file {}. {}", fileName, e.getLocalizedMessage());
+        }
+        return uploaded;
     }
 
     public boolean upload(InputStream inputStream, String fileName) {

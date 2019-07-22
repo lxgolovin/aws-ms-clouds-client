@@ -2,6 +2,7 @@ package com.lxgolovin.clouds.tasks;
 
 import com.lxgolovin.clouds.aws.s3.BucketAwsS3;
 import com.lxgolovin.clouds.cloudfs.core.BucketItem;
+import com.lxgolovin.clouds.config.Constants;
 import com.lxgolovin.clouds.msgraph.drive.BucketOneDrive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ public class Copier {
         }
         final String DEFAULT_SAVE_STATE_DIRECTORY = "./TEMP/processedFiles.state";
 
-        final String sopyFilter = (filter == null) ? ".*" : filter;
+        final String copyFilter = (filter == null) ? ".*" : filter;
 
 
         processedFiles = readState(Paths.get(DEFAULT_SAVE_STATE_DIRECTORY));
@@ -38,7 +39,7 @@ public class Copier {
         logger.debug("Bytes total: {}", bucketAwsS3.sizeTotalBytes());
 
 
-        bucketAwsS3.readBucket(filter)
+        bucketAwsS3.readBucket(copyFilter)
                 .stream()
                 .filter(BucketItem::isFile)
                 .filter(b -> {
@@ -59,7 +60,7 @@ public class Copier {
                 });
 
 
-        bucketAwsS3.readBucket(filter)
+        bucketAwsS3.readBucket(copyFilter)
                 .stream()
                 .filter(BucketItem::isFile)
                 .filter(bucketItem -> !processedFiles.containsKey(bucketItem.getPath()))
@@ -68,7 +69,13 @@ public class Copier {
                             bucketItem.getPath(), bucketItem.getSize());
                     BucketOneDrive bucketOneDrive = new BucketOneDrive(bucketNameMs);
                     bucketOneDrive.delete(bucketItem.getPath());
-                    boolean isUploaded = bucketOneDrive.upload(bucketAwsS3.readBucketItem(bucketItem), bucketItem.getPath());
+
+                    boolean isUploaded;
+                    if (bucketItem.getSize() > Constants.ONE_DRIVE_MAX_CONTENT_SIZE) {
+                        isUploaded = bucketOneDrive.upload(bucketAwsS3.readBucketItem(bucketItem), bucketItem.getPath());
+                    } else {
+                        isUploaded = bucketOneDrive.uploadSmall(bucketAwsS3.readBucketItem(bucketItem), bucketItem.getPath());
+                    }
                     if (isUploaded) {
                         processedFiles.put(bucketItem.getPath(), bucketItem.getSize());
                     }
