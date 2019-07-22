@@ -1,5 +1,7 @@
 package com.lxgolovin.clouds.config;
 
+import software.amazon.awssdk.regions.Region;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -23,4 +25,7 @@ public final class Constants {
     public static final String DEFAULT_SAVE_STATE_DIRECTORY = "./TEMP/processedFiles.state";
 
     public static final int HTTP_RESPONSE_NOT_FOUND = 404;
+
+//    public static Region DEFAULT_AWS_REGION = Region.EU_CENTRAL_1;
+    private static Region DEFAULT_AWS_REGION = Region.US_EAST_1;
 }

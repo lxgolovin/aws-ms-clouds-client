@@ -53,7 +53,7 @@ public class BucketAwsS3 {
     }
 
     public Set<BucketItem> readBucket(String filter) {
-        String contentFilter = (isNull(filter)) ? ".*" : filter;
+        String contentFilter = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
         this.bucketItems = new HashSet<>();
         this.bucketSizeTotal = 0;
 

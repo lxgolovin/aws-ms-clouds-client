@@ -21,8 +21,22 @@ public class Copier {
     private static Logger logger = LoggerFactory.getLogger(Copier.class);
 
     private Map<String, Long> processedFiles;
+    private final String bucketNameAws;
+    private final String bucketNameMs;
+    private final BucketAwsS3 bucketAwsS3;
+    private final BucketOneDrive bucketOneDrive;
 
-    public void copyAwsToMs(String bucketNameAws, String bucketNameMs, String filter) {
+    public Copier(String bucketNameAws, String bucketNameMs) {
+        // TODO: to be replaced just with source and target
+        this.bucketNameAws = bucketNameAws;
+        this.bucketNameMs = bucketNameMs;
+        this.bucketAwsS3 = new BucketAwsS3(bucketNameAws);
+        this.bucketOneDrive = new BucketOneDrive(bucketNameMs);
+
+    }
+
+
+    public void copyAwsToMs(String filter) {
         if (isNull(bucketNameAws) || isNull(bucketNameMs)) {
             throw new IllegalArgumentException("BucketAwsS3 name cannot be null");
         }
@@ -30,52 +44,47 @@ public class Copier {
 
 
         processedFiles = readState(Paths.get(Constants.DEFAULT_SAVE_STATE_DIRECTORY));
-        BucketAwsS3 bucketAwsS3 = new BucketAwsS3(bucketNameAws);
         logger.debug("Read bucketAwsS3 '{}':", bucketNameAws);
         logger.debug("Number of items: {}", bucketAwsS3.filesCount());
-        logger.debug("Total: {} Bytes; {} GB", bucketAwsS3.sizeTotalBytes(), bucketAwsS3.sizeTotalBytes()/(1024*1024*1024));
-
-
-        bucketAwsS3.readBucket(copyFilter)
-                .stream()
-                .filter(BucketItem::isFile)
-                .filter(b -> {
-                    long fileSizeInMs = new BucketOneDrive(bucketNameMs)
-                            .getFileInfo(b.getPath())
-                            .getSize();
-                    String file = b.getPath();
-                    return processedFiles
-                            .entrySet()
-                            .stream()
-                            .filter(e -> e.getKey().equals(file))
-                            .filter(e -> e.getValue() == b.getSize())
-                            .anyMatch(e -> e.getValue() != fileSizeInMs);
-                })
-                .forEach(b -> {
-                    processedFiles.remove(b.getPath());
-                    logger.debug("File '{}' processed, but not equal to original. Should be resend", b.getPath());
-                });
-
+        logger.debug("Total: {} bytes; {} MB", bucketAwsS3.sizeTotalBytes(), bucketAwsS3.sizeTotalBytes()/(1024*1024));
 
         bucketAwsS3.readBucket(copyFilter)
                 .stream()
                 .filter(BucketItem::isFile)
-                .filter(bucketItem -> !processedFiles.containsKey(bucketItem.getPath()))
+                .filter(this::needToProcessBucketItem)
                 .forEach(bucketItem -> {
-                    logger.debug("Path: '{}'; Size: {}; IsRegularFile: Yes",
-                            bucketItem.getPath(), bucketItem.getSize());
-                    BucketOneDrive bucketOneDrive = new BucketOneDrive(bucketNameMs);
-                    bucketOneDrive.delete(bucketItem.getPath());
+                    String filePath = bucketItem.getPath();
+                    long fileSize = bucketItem.getSize();
 
-                    boolean isUploaded = bucketOneDrive.upload(bucketAwsS3.readBucketItem(bucketItem), bucketItem.getPath());
-                    if (isUploaded) {
-                        processedFiles.put(bucketItem.getPath(), bucketItem.getSize());
+                    logger.debug("Processing: '{}'; Size: {}", filePath, fileSize);
+                    boolean isUploaded = bucketOneDrive.upload(bucketAwsS3.readBucketItem(bucketItem), filePath);
+                    long fileSizeInMs = bucketOneDrive.getFileInfo(filePath).getSize();
+                    if (isUploaded || (fileSizeInMs == fileSize)) {
+                        processedFiles.put(filePath, fileSize);
                     }
                 });
 
         // TODO: remove this line after debugging
         processedFiles.forEach((k, v) -> logger.debug("File '{}', size '{}' processed", k, v));
         saveState(processedFiles, Paths.get(Constants.DEFAULT_SAVE_STATE_DIRECTORY));
+    }
+
+    private boolean needToProcessBucketItem(BucketItem b) {
+        boolean processFile;
+        long fileSizeInMs = bucketOneDrive.getFileInfo(b.getPath()).getSize();
+        if (fileSizeInMs < 0) {
+            processFile = true;
+        } else {
+            String file = b.getPath();
+
+            processFile = processedFiles
+                    .entrySet()
+                    .stream()
+                    .filter(e -> e.getKey().equals(file))
+                    .filter(e -> e.getValue() == b.getSize())
+                    .anyMatch(e -> (e.getValue() != fileSizeInMs) && bucketOneDrive.delete(file));
+        }
+        return processFile;
     }
 
     private void saveState(Map<?, ?> map, Path path) {
