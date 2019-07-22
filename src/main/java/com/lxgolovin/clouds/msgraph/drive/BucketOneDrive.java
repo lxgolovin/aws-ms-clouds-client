@@ -1,6 +1,7 @@
 package com.lxgolovin.clouds.msgraph.drive;
 
 import com.lxgolovin.clouds.cloudfs.core.BucketItem;
+import com.lxgolovin.clouds.config.Constants;
 import com.lxgolovin.clouds.msgraph.client.Client;
 import com.microsoft.graph.concurrency.ChunkedUploadProvider;
 import com.microsoft.graph.concurrency.IProgressCallback;
@@ -125,37 +126,6 @@ public class BucketOneDrive {
         return deleteResult;
     }
 
-    public boolean uploadSmall(InputStream inputStream, String fileName) {
-        if (fileName == null)  {
-            throw new IllegalArgumentException();
-        }
-
-        if (inputStream == null) {
-            return false;
-        }
-
-        boolean uploaded = false;
-        try {
-            byte[] buffer = new byte[inputStream.available()];
-            int b = 0;
-            while (b != -1) {
-                b = inputStream.read(buffer);
-            }
-
-            graphClient
-                    .me()
-                    .drive()
-                    .items(bucket)
-                    .itemWithPath(fileName)
-                    .content()
-                    .buildRequest()
-                    .put(buffer);
-        } catch (IOException e) {
-            logger.error("Cannot read content of the file {}. {}", fileName, e.getLocalizedMessage());
-        }
-        return uploaded;
-    }
-
     public boolean upload(InputStream inputStream, String fileName) {
         if (fileName == null)  {
             throw new IllegalArgumentException();
@@ -166,36 +136,60 @@ public class BucketOneDrive {
         }
 
         boolean uploadResult = false;
-        int fileSize;
 
         try {
-            // fileSize = (size <= 0) ? inputStream.available() : size;
-            fileSize = inputStream.available();
+            int fileSize = inputStream.available();
 
-            UploadSession uploadSession = graphClient
-                    .me()
-                    .drive()
-                    .items(bucket)
-                    .itemWithPath(fileName)
-                    .createUploadSession(new DriveItemUploadableProperties())
-                    .buildRequest()
-                    .post();
-
-            ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(
-                    uploadSession,
-                    graphClient,
-                    inputStream,
-                    fileSize,
-                    DriveItem.class);
-
-            chunkedUploadProvider.upload(callback);
+            if (fileSize <= Constants.ONE_DRIVE_MAX_CONTENT_SIZE) {
+                logger.debug("Do NOT create session for file {} size {}", fileName, fileSize);
+                uploadSmallFile(inputStream, fileName, fileSize);
+            } else {
+                logger.debug("Create session for file {} size {}", fileName, fileSize);
+                uploadLargeFile(inputStream, fileName, fileSize);
+            }
             uploadResult = true;
+        } catch (ClientException e) {
+            logger.error("Unable to upload file {}. {}", fileName, e.getLocalizedMessage());
         } catch (IOException e) {
             logger.error("IO error during file upload {}. Try later. {}", fileName, e.getLocalizedMessage());
-        } catch (GraphServiceException e) {
-            logger.error("File already exists {}: {}", fileName, e.getResponseMessage());
         }
         return uploadResult;
+    }
+
+    private void uploadLargeFile(InputStream inputStream, String fileName, int fileSize) throws IOException {
+        UploadSession uploadSession = graphClient
+                .me()
+                .drive()
+                .items(bucket)
+                .itemWithPath(fileName)
+                .createUploadSession(new DriveItemUploadableProperties())
+                .buildRequest()
+                .post();
+
+        ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(
+                uploadSession,
+                graphClient,
+                inputStream,
+                fileSize,
+                DriveItem.class);
+        chunkedUploadProvider.upload(callback);
+    }
+
+    private void uploadSmallFile(InputStream inputStream, String fileName, int fileSize) throws IOException {
+        byte[] buffer = new byte[fileSize];
+        int b = 0;
+        while (b != -1) {
+            b = inputStream.read(buffer);
+        }
+
+        graphClient
+                .me()
+                .drive()
+                .items(bucket)
+                .itemWithPath(fileName)
+                .content()
+                .buildRequest()
+                .put(buffer);
     }
 
     private final IProgressCallback<DriveItem> callback = new IProgressCallback<DriveItem> () {

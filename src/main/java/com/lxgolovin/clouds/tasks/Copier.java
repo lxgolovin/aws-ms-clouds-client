@@ -22,17 +22,14 @@ public class Copier {
 
     private Map<String, Long> processedFiles;
 
-
     public void copyAwsToMs(String bucketNameAws, String bucketNameMs, String filter) {
         if (isNull(bucketNameAws) || isNull(bucketNameMs)) {
             throw new IllegalArgumentException("BucketAwsS3 name cannot be null");
         }
-        final String DEFAULT_SAVE_STATE_DIRECTORY = "./TEMP/processedFiles.state";
-
-        final String copyFilter = (filter == null) ? ".*" : filter;
+        final String copyFilter = (filter == null) ? Constants.DEFAULT_FILTER : filter;
 
 
-        processedFiles = readState(Paths.get(DEFAULT_SAVE_STATE_DIRECTORY));
+        processedFiles = readState(Paths.get(Constants.DEFAULT_SAVE_STATE_DIRECTORY));
         BucketAwsS3 bucketAwsS3 = new BucketAwsS3(bucketNameAws);
         logger.debug("Read bucketAwsS3 '{}':", bucketNameAws);
         logger.debug("Number of items: {}", bucketAwsS3.filesCount());
@@ -70,12 +67,7 @@ public class Copier {
                     BucketOneDrive bucketOneDrive = new BucketOneDrive(bucketNameMs);
                     bucketOneDrive.delete(bucketItem.getPath());
 
-                    boolean isUploaded;
-                    if (bucketItem.getSize() > Constants.ONE_DRIVE_MAX_CONTENT_SIZE) {
-                        isUploaded = bucketOneDrive.upload(bucketAwsS3.readBucketItem(bucketItem), bucketItem.getPath());
-                    } else {
-                        isUploaded = bucketOneDrive.uploadSmall(bucketAwsS3.readBucketItem(bucketItem), bucketItem.getPath());
-                    }
+                    boolean isUploaded = bucketOneDrive.upload(bucketAwsS3.readBucketItem(bucketItem), bucketItem.getPath());
                     if (isUploaded) {
                         processedFiles.put(bucketItem.getPath(), bucketItem.getSize());
                     }
@@ -83,7 +75,7 @@ public class Copier {
 
         // TODO: remove this line after debugging
         processedFiles.forEach((k, v) -> logger.debug("File '{}', size '{}' processed", k, v));
-        saveState(processedFiles, Paths.get(DEFAULT_SAVE_STATE_DIRECTORY));
+        saveState(processedFiles, Paths.get(Constants.DEFAULT_SAVE_STATE_DIRECTORY));
     }
 
     private void saveState(Map<?, ?> map, Path path) {

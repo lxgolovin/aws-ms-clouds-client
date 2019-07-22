@@ -9,8 +9,6 @@ import com.microsoft.graph.core.DefaultClientConfig;
 import com.microsoft.graph.core.IClientConfig;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -33,8 +31,6 @@ class AuthenticateInsecure {
     private IGraphServiceClient graphClient = null;
 
     private final Configuration configuration = new Configuration();
-
-    private Logger logger = LoggerFactory.getLogger(AuthenticateInsecure.class);
 
     AuthenticateInsecure() {
         this.clientId = configuration.getAppId();
@@ -61,7 +57,6 @@ class AuthenticateInsecure {
                     request -> request.addHeader("Authorization","Bearer " + accessToken);
             IClientConfig mClientConfig = DefaultClientConfig.createWithAuthenticationProvider(mAuthenticationProvider);
 
-            logger.debug("Access token is '{}'", accessToken);
             graphClient = GraphServiceClient.fromConfig(mClientConfig);
         } catch (Exception e) {
             throw new IllegalAccessError("Unable to create graph client: " + e.getLocalizedMessage());
@@ -83,7 +78,6 @@ class AuthenticateInsecure {
             } else {
                 conn = (HttpURLConnection) url.openConnection();
             }
-            logger.debug("Get token");
 
             String line;
             StringBuilder jsonString = new StringBuilder();
@@ -118,8 +112,6 @@ class AuthenticateInsecure {
             JsonObject res = new GsonBuilder()
                     .create()
                     .fromJson(jsonString.toString(), JsonObject.class);
-
-            logger.debug("Got response {}", res.get("access_token"));
 
             return res
                     .get("access_token")

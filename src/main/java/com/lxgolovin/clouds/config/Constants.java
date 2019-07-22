@@ -13,7 +13,11 @@ public final class Constants {
 
     public static final int DEFAULT_AWS_S3_CHUNK_SIZE = 8 * 1024 * 1024;
 
-    public static final int ONE_DRIVE_MAX_CONTENT_SIZE = 8 * 1024 * 1024;
+    public static final int ONE_DRIVE_MAX_CONTENT_SIZE = 4 * 1024 * 1024;
 
     public static final int MAXIMUM_AWS_S3_CHUNK_SIZE = Integer.MAX_VALUE - 8;
+
+    public static final String DEFAULT_FILTER = ".*";
+
+    public static final String DEFAULT_SAVE_STATE_DIRECTORY = "./TEMP/processedFiles.state";
 }

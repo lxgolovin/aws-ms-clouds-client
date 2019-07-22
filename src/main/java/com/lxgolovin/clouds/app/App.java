@@ -20,9 +20,13 @@ public class App {
     public static void main(String[] args) {
 
 //        String proxy = "http://proxy-qa.aws.wiley.com";
-//        String port = "8080";
-//        System.setProperty("http.proxyHost", proxy);
-//        System.setProperty("http.proxyPort", port);
+        String proxy = "proxy-dev.aws.wiley.com";
+        String port = "8080";
+        System.setProperty("http.proxyHost", proxy);
+        System.setProperty("https.proxyHost", proxy);
+        System.setProperty("http.proxyPort", port);
+        System.setProperty("https.proxyPort", port);
+
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
