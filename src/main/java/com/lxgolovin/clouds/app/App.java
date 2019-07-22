@@ -15,7 +15,7 @@ public class App {
         private static final String DEFAULT_BUCKET_NAME = "aws-bucket-test-new-1";
 //    private static final String DEFAULT_BUCKET_NAME = "company-saleselm-10001";
 
-    private static final String DEFAULT_MSBUCKET_NAME = "01XHM6HBS53JZKPP326VFIRAMG4H56PBXH";
+    private static final String DEFAULT_MSBUCKET_NAME = "01XHM6HBVDVW4JY3CYY5CKRHKLTCRZR5GR";
 
     public static void main(String[] args) {
 

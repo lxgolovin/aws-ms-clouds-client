@@ -33,7 +33,7 @@ public class Copier {
         BucketAwsS3 bucketAwsS3 = new BucketAwsS3(bucketNameAws);
         logger.debug("Read bucketAwsS3 '{}':", bucketNameAws);
         logger.debug("Number of items: {}", bucketAwsS3.filesCount());
-        logger.debug("Bytes total: {}", bucketAwsS3.sizeTotalBytes());
+        logger.debug("Total: {} Bytes; {} GB", bucketAwsS3.sizeTotalBytes(), bucketAwsS3.sizeTotalBytes()/(1024*1024*1024));
 
 
         bucketAwsS3.readBucket(copyFilter)

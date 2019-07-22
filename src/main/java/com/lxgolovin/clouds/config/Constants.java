@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 
 public final class Constants {
 
+
     static final Path DEFAULT_CONFIG_FILE = Paths.get("src/main/resources/oAuth.properties");
 
     static final String DEFAULT_SEPARATOR = ",";
@@ -20,4 +21,6 @@ public final class Constants {
     public static final String DEFAULT_FILTER = ".*";
 
     public static final String DEFAULT_SAVE_STATE_DIRECTORY = "./TEMP/processedFiles.state";
+
+    public static final int HTTP_RESPONSE_NOT_FOUND = 404;
 }

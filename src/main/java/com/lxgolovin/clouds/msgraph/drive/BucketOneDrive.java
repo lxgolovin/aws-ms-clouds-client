@@ -84,7 +84,12 @@ public class BucketOneDrive {
                     .buildRequest()
                     .get());
         } catch (GraphServiceException e) {
-            logger.error("Cannot get file {} info: {}", file, e.getResponseMessage());
+            if (e.getResponseCode() == Constants.HTTP_RESPONSE_NOT_FOUND) {
+                logger.info("File '{}' not found.\n Response code: {};\n system response: {}",
+                        file, e.getResponseCode(), e.getResponseMessage());
+            } else {
+                logger.error("Cannot get file {} info: {}", file, e.getResponseMessage());
+            }
             bucketItem = new BucketItem(file); // create empty BucketItem
         }
 
