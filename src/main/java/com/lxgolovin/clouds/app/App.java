@@ -13,10 +13,12 @@ public class App {
     private static Logger logger = LoggerFactory.getLogger(App.class);
 
 //        private static final String DEFAULT_BUCKET_NAME = "aws-bucket-test-new-1";
-        private static final String DEFAULT_BUCKET_NAME = "aws-nonprod-alm-oneview";
+//        private static final String DEFAULT_BUCKET_NAME = "aws-nonprod-alm-oneview";
+    private static final String DEFAULT_BUCKET_NAME = "aws-nonprod-alm-oneview";
 //    private static final String DEFAULT_BUCKET_NAME = "company-saleselm-10001";
 
     private static final String DEFAULT_MS_BUCKET_NAME = "01XHM6HBUOKVNQM2MZERGLFEJ3FITM4CTP";
+    private static final String filter = ".*Vault_Test_Data.*";
 
     public static void main(String[] args) {
 
@@ -51,7 +53,7 @@ public class App {
                                 logger.debug("Path: '{}'; Size: {}; IsRegularFile: '{}'", fn.getPath(), fn.getSize(), fn.isFile()));
             } else {
                 String bucketName = (cmd.hasOption("b")) ? cmd.getOptionValue("bucket") : DEFAULT_BUCKET_NAME;
-                new Copier(bucketName, DEFAULT_MS_BUCKET_NAME).copyAwsToMs(null);
+                new Copier(bucketName, DEFAULT_MS_BUCKET_NAME).copyAwsToMs(filter);
             }
         } catch (ParseException e) {
             System.out.println(e.getMessage());

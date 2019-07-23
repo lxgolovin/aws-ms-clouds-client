@@ -21,6 +21,7 @@ public class Copier {
     private static Logger logger = LoggerFactory.getLogger(Copier.class);
 
     private Map<String, Long> processedFiles;
+    private Map<String, Long> unprocessedFiles = new HashMap<>();
     private final String bucketNameAws;
     private final String bucketNameMs;
     private final BucketAwsS3 bucketAwsS3;
@@ -43,7 +44,7 @@ public class Copier {
         final String copyFilter = (filter == null) ? Constants.DEFAULT_FILTER : filter;
 
 
-        processedFiles = readState(Paths.get(Constants.DEFAULT_SAVE_STATE_DIRECTORY));
+        processedFiles = readState(Paths.get(bucketNameAws + "_" + Constants.DEFAULT_SAVE_STATE_DIRECTORY));
         logger.debug("Read bucketAwsS3 '{}':", bucketNameAws);
         logger.debug("Number of items: {}", bucketAwsS3.filesCount());
         logger.debug("Total: {} bytes; {} MB", bucketAwsS3.sizeTotalBytes(), bucketAwsS3.sizeTotalBytes()/(1024*1024));
@@ -61,12 +62,15 @@ public class Copier {
                     long fileSizeInMs = bucketOneDrive.getFileInfo(filePath).getSize();
                     if (isUploaded || (fileSizeInMs == fileSize)) {
                         processedFiles.put(filePath, fileSize);
+                    } else {
+                        unprocessedFiles.put(filePath, fileSize);
                     }
                 });
 
         // TODO: remove this line after debugging
         processedFiles.forEach((k, v) -> logger.debug("File '{}', size '{}' processed", k, v));
-        saveState(processedFiles, Paths.get(Constants.DEFAULT_SAVE_STATE_DIRECTORY));
+        unprocessedFiles.forEach((k, v) -> logger.debug("File '{}', size '{}' NOT processed", k, v));
+        saveState(processedFiles, Paths.get(bucketNameAws + "_" + Constants.DEFAULT_SAVE_STATE_DIRECTORY));
     }
 
     private boolean needToProcessBucketItem(BucketItem b) {
