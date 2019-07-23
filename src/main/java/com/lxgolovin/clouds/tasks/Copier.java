@@ -27,11 +27,11 @@ public class Copier {
     private final BucketAwsS3 bucketAwsS3;
     private final BucketOneDrive bucketOneDrive;
 
-    public Copier(String bucketNameAws, String bucketNameMs) {
+    public Copier(String bucketNameAws, String bucketNameMs, String prefix) {
         // TODO: to be replaced just with source and target
         this.bucketNameAws = bucketNameAws;
         this.bucketNameMs = bucketNameMs;
-        this.bucketAwsS3 = new BucketAwsS3(bucketNameAws);
+        this.bucketAwsS3 = new BucketAwsS3(bucketNameAws, prefix);
         this.bucketOneDrive = new BucketOneDrive(bucketNameMs);
 
     }
@@ -41,7 +41,8 @@ public class Copier {
         if (isNull(bucketNameAws) || isNull(bucketNameMs)) {
             throw new IllegalArgumentException("BucketAwsS3 name cannot be null");
         }
-        final String copyFilter = (filter == null) ? Constants.DEFAULT_FILTER : filter;
+
+        String copyFilter = (filter == null) ? Constants.DEFAULT_FILTER : filter;
 
 
         processedFiles = readState(Paths.get(bucketNameAws + "_" + Constants.DEFAULT_SAVE_STATE_DIRECTORY));
@@ -49,9 +50,10 @@ public class Copier {
         logger.debug("Number of items: {}", bucketAwsS3.filesCount());
         logger.debug("Total: {} bytes; {} MB", bucketAwsS3.sizeTotalBytes(), bucketAwsS3.sizeTotalBytes()/(1024*1024));
 
-        bucketAwsS3.readBucket(copyFilter)
+        bucketAwsS3.readBucket()
                 .stream()
                 .filter(BucketItem::isFile)
+                .filter(bucketItem -> bucketItem.getPath().matches(copyFilter))
                 .filter(this::needToProcessBucketItem)
                 .forEach(bucketItem -> {
                     String filePath = bucketItem.getPath();
@@ -62,7 +64,9 @@ public class Copier {
                     long fileSizeInMs = bucketOneDrive.getFileInfo(filePath).getSize();
                     if (isUploaded || (fileSizeInMs == fileSize)) {
                         processedFiles.put(filePath, fileSize);
+                        unprocessedFiles.remove(filePath);
                     } else {
+                        processedFiles.remove(filePath);
                         unprocessedFiles.put(filePath, fileSize);
                     }
                 });

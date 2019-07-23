@@ -16,21 +16,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BucketAwsS3Test {
 
-    private final BucketAwsS3 bucketAwsS3 = new BucketAwsS3(Client.getS3Client(TestsBase.region), TestsBase.existingBucketName);
+    private final BucketAwsS3 bucketAwsS3 = new BucketAwsS3(Client.getS3Client(TestsBase.region), TestsBase.existingBucketName, null);
 
     private Set<BucketItem> bucketItems;
 
     @BeforeEach
     void setUp() {
-        bucketItems = bucketAwsS3.readBucket(TestsBase.filter);
+        bucketItems = bucketAwsS3.readBucket();
         assertNotNull(bucketItems);
     }
 
     @Test
     void nullChecked() {
-        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(null));
         assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(null, null));
-        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(Client.getS3Client(TestsBase.region), null));
+        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(Client.getS3Client(TestsBase.region), null, null));
     }
 
     @Test
@@ -73,7 +73,7 @@ class BucketAwsS3Test {
 
     @Test
     void getFile() {
-        assertNotNull(bucketAwsS3.readBucketItem(bucketItems.iterator().next()));
+        assertTrue(bucketItems.stream().anyMatch(BucketItem::isFile));
     }
 
 

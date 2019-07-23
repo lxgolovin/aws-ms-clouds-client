@@ -125,7 +125,12 @@ public class BucketOneDrive {
                     .delete();
             deleteResult = true;
         } catch (GraphServiceException e) {
-            logger.error("Cannot delete file {} info: {}", fileName, e.getResponseMessage());
+            if (e.getResponseCode() == Constants.HTTP_RESPONSE_NOT_FOUND) {
+                logger.info("File '{}' not found.\n Response code: {};\n system response: {}",
+                        fileName, e.getResponseCode(), e.getResponseMessage());
+            } else {
+                logger.error("Cannot get file {} info: {}", fileName, e.getResponseMessage());
+            }
         }
 
         return deleteResult;
@@ -153,6 +158,9 @@ public class BucketOneDrive {
                 uploadLargeFile(inputStream, fileName, fileSize);
             }
             uploadResult = true;
+        } catch (GraphServiceException e) {
+            logger.error("File '{}' not uploaded.\n Response code: {};\n system response: {}",
+                    fileName, e.getResponseCode(), e.getResponseMessage());
         } catch (ClientException e) {
             logger.error("Unable to upload file {}. {}", fileName, e.getLocalizedMessage());
         } catch (IOException e) {

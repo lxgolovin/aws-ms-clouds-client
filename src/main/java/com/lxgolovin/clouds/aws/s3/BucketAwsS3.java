@@ -34,25 +34,21 @@ public class BucketAwsS3 {
 
     private Logger logger = LoggerFactory.getLogger(BucketAwsS3.class);
 
-    public BucketAwsS3(String bucket) {
-        this(Client.getS3Client(), bucket);
+    public BucketAwsS3(String bucket, String prefix) {
+        this(Client.getS3Client(), bucket, prefix);
     }
 
-    BucketAwsS3(S3Client s3Client, String bucketName) {
+    BucketAwsS3(S3Client s3Client, String bucketName, String prefix) {
         ifIllegalNull(bucketName, "Bucket name cannot be null");
 
         this.s3 = (s3Client == null) ? Client.getS3Client() : s3Client;
         this.bucket = bucketName;
 
-        logger.debug("Initialize bucket {}", this.bucket);
-        readBucket(null);
+        logger.debug("Initialize bucket {} with prefix {}", this.bucket, prefix);
+        initBucket(prefix, Constants.DEFAULT_FILTER);
     }
 
-    Set<BucketItem> readBucket() {
-        return readBucket(null);
-    }
-
-    public Set<BucketItem> readBucket(String filter) {
+    private void initBucket(String prefix, String filter) {
         String contentFilter = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
         this.bucketItems = new HashSet<>();
         this.bucketSizeTotal = 0;
@@ -60,6 +56,7 @@ public class BucketAwsS3 {
         ListObjectsV2Request listReq = ListObjectsV2Request
                 .builder()
                 .bucket(bucket)
+                .prefix(prefix)
                 .maxKeys(1)
                 .build();
 
@@ -77,6 +74,9 @@ public class BucketAwsS3 {
         } catch (SdkException e) {
             logger.error("Cannot read bucket {}: {}", bucket, e.toBuilder().message());
         }
+    }
+
+    public Set<BucketItem> readBucket() {
         return bucketItems;
     }
 
