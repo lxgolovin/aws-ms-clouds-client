@@ -50,8 +50,8 @@ public class BucketOneDrive {
         return readBucket(null);
     }
 
-    public Set<BucketItem> readBucket(String filter) {
-        String regex = (isNull(filter)) ? ".*" : filter;
+    private Set<BucketItem> readBucket(String filter) {
+        String regex = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
         this.bucketItems = new HashSet<>();
         try {
             List<DriveItem> driveItems =  graphClient
@@ -90,6 +90,9 @@ public class BucketOneDrive {
             } else {
                 logger.error("Cannot get file {} info: {}", file, e.getResponseMessage());
             }
+            bucketItem = new BucketItem(file); // create empty BucketItem
+        } catch (ClientException e) {
+            logger.error("Cannot get file {} info: {}", file, e.getLocalizedMessage());
             bucketItem = new BucketItem(file); // create empty BucketItem
         }
 

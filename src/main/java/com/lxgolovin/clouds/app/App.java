@@ -12,24 +12,28 @@ public class App {
 
     private static Logger logger = LoggerFactory.getLogger(App.class);
 
-        private static final String DEFAULT_BUCKET_NAME = "aws-bucket-test-new-1";
+//        private static final String DEFAULT_BUCKET_NAME = "aws-bucket-test-new-1";
 //        private static final String DEFAULT_BUCKET_NAME = "aws-nonprod-alm-oneview";
 //    private static final String DEFAULT_BUCKET_NAME = "aws-nonprod-alm-oneview";
 //    private static final String DEFAULT_BUCKET_NAME = "company-saleselm-10001";
+    private static final String DEFAULT_BUCKET_NAME = "aws-prod-vault-content";
 
     private static final String DEFAULT_MS_BUCKET_NAME = "01XHM6HBUOKVNQM2MZERGLFEJ3FITM4CTP";
-    private static final String prefix = "";
+    private static final String prefix = "GECMS/NONPRODUCT_CONTENTS/Image Archive";
     private static final String filter = ".*";
 
     public static void main(String[] args) {
 
 //        String proxy = "http://proxy-qa.aws.wiley.com";
-        String proxy = "proxy-dev.aws.wiley.com";
-        String port = "8080";
-        System.setProperty("http.proxyHost", proxy);
-        System.setProperty("https.proxyHost", proxy);
-        System.setProperty("http.proxyPort", port);
-        System.setProperty("https.proxyPort", port);
+//        String proxy = "proxy-dev.aws.wiley.com";
+//        String port = "8080";
+//        System.setProperty("http.proxyHost", proxy);
+//        System.setProperty("https.proxyHost", proxy);
+//        System.setProperty("http.proxyPort", port);
+//        System.setProperty("https.proxyPort", port);
+        System.setProperty("aws.accessKeyId", "ASIAUKQAU3HFMK47INWC");
+        System.setProperty("aws.secretAccessKey", "FRdFizoyAtqmggb6DQNmKBkJ+rwXGK95HNsfFsJW");
+        System.setProperty("aws.securityToken", "FQoGZXIvYXdzEIj//////////wEaDMVuX7dW+ZCyO65o1iLzAX8wFYS164X/6lxxGtPr0f6xIERZrCqpUQVlW1rT3gAUAGmzC+oR1xigphK+QukXq6YEGOgnvbX0QP6VIIM0FwG/XVIQI7A5jUlNisI6M8fS85dVEdgwdeLzOCSsBej8tlSkhkwoUnKri4s11VjMZEHfdfap7AtgRtsmDN7oFgE+704ExIPx8h8GyJnEZUUjzlJ7N6BYdLzoc13RmtO8WYIt4iaR3WD9aeQb1sxY5JTll9d33nFRo8E1FAiQ4QlGl+JA8CRQyDE1Nx6Qjq1hYJA7+MdvTfybwRsLxmSSArZEKubmzvo0bDHFuJgG1Wh22tHCbSidkN7pBQ==");
 
 
         CommandLineParser parser = new DefaultParser();
