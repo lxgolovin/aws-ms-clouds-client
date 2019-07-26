@@ -25,8 +25,11 @@ public class Configuration {
     private final boolean isProxyUsed;
 
     private final String awsRegion;
+
     private final String awsAccessKeyId;
+
     private final String awsSecretAccessKey;
+
     private final String awsSessionToken;
 
     public Configuration() {
@@ -65,20 +68,41 @@ public class Configuration {
         this.proxyPort = Integer.valueOf(oAuthProperties.getProperty(PROXY_PORT));
         this.isProxyUsed = (oAuthProperties.getProperty(PROXY_USE).equals("YES"));
 
-        this.awsRegion = oAuthProperties.getProperty(AWS_REGION);
+        String awsRegion = oAuthProperties.getProperty(AWS_REGION);
+        if (awsRegion == null) {
+            awsRegion = Constants.DEFAULT_AWS_REGION;
+        }
+        this.awsRegion = awsRegion;
+
         this.awsAccessKeyId = oAuthProperties.getProperty(AWS_ACCESS_KEY_ID);
         this.awsSecretAccessKey = oAuthProperties.getProperty(AWS_SECRET_ACCESS_KEY);
         this.awsSessionToken = oAuthProperties.getProperty(AWS_SESSION_TOKEN);
 
+        setProxy();
+        setAwsToken();
+    }
+
+    private void setAwsToken() {
+        if (this.awsAccessKeyId != null) {
+            System.setProperty("aws.accessKeyId", this.awsAccessKeyId);
+        }
+
+        if (this.awsSecretAccessKey != null) {
+            System.setProperty("aws.secretAccessKey", this.awsSecretAccessKey);
+        }
+
+        if (this.awsSessionToken != null){
+            System.setProperty("aws.sessionToken", this.awsSessionToken);
+        }
+    }
+
+    private void setProxy() {
         if (this.isProxyUsed) {
             System.setProperty("http.proxyHost", this.proxyServer);
-            System.setProperty("https.proxyHost", String.valueOf(this.proxyPort));
-            System.setProperty("http.proxyPort", this.proxyServer);
+            System.setProperty("https.proxyHost", this.proxyServer);
+            System.setProperty("http.proxyPort", String.valueOf(this.proxyPort));
             System.setProperty("https.proxyPort", String.valueOf(this.proxyPort));
         }
-        System.setProperty("aws.accessKeyId", this.awsAccessKeyId);
-        System.setProperty("aws.secretAccessKey", this.awsSecretAccessKey);
-        System.setProperty("aws.sessionToken", this.awsSessionToken);
     }
 
     private void readConfigFile(Path configFilePath) {

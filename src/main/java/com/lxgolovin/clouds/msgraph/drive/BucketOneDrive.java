@@ -14,7 +14,6 @@ import com.microsoft.graph.models.extensions.UploadSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.utils.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,8 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static java.util.Objects.isNull;
 
 public class BucketOneDrive {
 
@@ -51,11 +48,8 @@ public class BucketOneDrive {
     }
 
     public Set<BucketItem> readBucket() {
-        return readBucket(null);
-    }
-
-    private Set<BucketItem> readBucket(String filter) {
-        String regex = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
+        // TODO: need to implement filter as a param: String regex = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
+        final String regex = Constants.DEFAULT_FILTER;
         this.bucketItems = new HashSet<>();
         try {
             List<DriveItem> driveItems =  graphClient
@@ -105,6 +99,10 @@ public class BucketOneDrive {
     }
 
     private String pathToUrl(String file) {
+        if (file == null) {
+            return null;
+        }
+
         String fileName = file;
         try {
             fileName = URLEncoder.encode(file, StandardCharsets.UTF_8.toString());
@@ -120,11 +118,10 @@ public class BucketOneDrive {
         if (resultDriveItem != null) {
             String path = resultDriveItem.parentReference.path.replaceAll("(/drive/root:)", "");
             path = path.concat("/").concat(resultDriveItem.name);
-            String parentBucket = resultDriveItem.parentReference.driveId;
+            // TODO: to be implemented in future: String parentBucket = resultDriveItem.parentReference.driveId;
             boolean isFolder = (resultDriveItem.folder == null);
 
             bucketItem = new BucketItem(
-                    parentBucket,
                     path,
                     resultDriveItem.size,
                     isFolder);

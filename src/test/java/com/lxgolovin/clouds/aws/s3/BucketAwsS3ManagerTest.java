@@ -21,6 +21,16 @@ class BucketAwsS3ManagerTest {
     private BucketManager bucketManager = new BucketManager(s3);
 
     @Test
+    void nullChecked() {
+        BucketManager bm = new BucketManager(null);
+        assertNotNull(bm);
+
+        assertFalse(bm.createBucket(null));
+        assertEquals("", bm.getLocation(null));
+        assertFalse(bm.deleteBucket(null));
+    }
+
+    @Test
     void createListDeleteEmptyBucket() {
         assertTrue(bucketManager.createBucket(bucket));
         assertTrue(
@@ -52,6 +62,4 @@ class BucketAwsS3ManagerTest {
                                 .build(),
                         RequestBody.fromByteBuffer(TestsBase.getRandomByteBuffer())));
     }
-
-
 }

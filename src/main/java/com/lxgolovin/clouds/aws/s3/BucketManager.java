@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.model.Bucket;
 
 import java.util.List;
+import java.util.Optional;
 
 public class BucketManager {
 
@@ -34,7 +35,10 @@ public class BucketManager {
     }
 
     boolean createBucket(String bucketName) {
+        if (bucketName == null)
+            return false;
         boolean isBucketCreated = false;
+
         CreateBucketRequest createBucketRequest = CreateBucketRequest
                 .builder()
                 .bucket(bucketName)
@@ -48,30 +52,35 @@ public class BucketManager {
             s3.createBucket(createBucketRequest);
             logger.info("BucketAwsS3 {} created", bucketName);
             isBucketCreated = true;
-        } catch (AwsServiceException | SdkClientException e) {
+        } catch (AwsServiceException e) {
+            logger.error("Unable to create bucket {}: message {}, code: {}", bucketName, e.toBuilder().message(), e.toBuilder().statusCode());
+        } catch (SdkClientException e) {
             logger.error("Unable to create bucket {}: {}", bucketName, e.getLocalizedMessage());
         }
 
         return isBucketCreated;
     }
 
-    public String getLocation(String bucket) {
-        String location = "";
+    public String getLocation(String bucketName) {
+        Optional<String> location = Optional.empty();
         try {
-            location = s3.getBucketLocation(GetBucketLocationRequest
+            location = Optional.ofNullable(s3.getBucketLocation(GetBucketLocationRequest
                     .builder()
-                    .bucket(bucket)
+                    .bucket(bucketName)
                     .build()
-            ).locationConstraintAsString();
-        } catch (S3Exception e) {
-            logger.error("Cannot get location: {}", e.getLocalizedMessage());
+            ).locationConstraintAsString());
+        } catch (AwsServiceException e) {
+            logger.error("Cannot get location: message {}, code: {}", e.toBuilder().message(), e.toBuilder().statusCode());
+        } catch (SdkClientException e) {
+            logger.error("Not possible to get location for the bucket {}: {}", bucketName, e.getLocalizedMessage());
         }
-        return location;
+
+        return location.orElse("");
     }
 
     boolean deleteBucket(String bucketName) {
         // TODO: need to implement check if the bucket is empty or not and then delete in different ways
-        return deleteEmptyBucket(bucketName);
+        return (bucketName != null) && deleteEmptyBucket(bucketName);
     }
 
     private boolean deleteEmptyBucket(String bucketName) {
@@ -81,8 +90,10 @@ public class BucketManager {
         try {
             s3.deleteBucket(deleteBucketRequest);
             isBucketDeleted = true;
-        } catch (AwsServiceException | SdkClientException e) {
-            logger.error("Unable to delete bucket {}: {}", bucketName, e.getLocalizedMessage());
+        } catch (AwsServiceException e) {
+            logger.error("Unable to delete the bucket {}: message {}, code: {}", bucketName, e.toBuilder().message(), e.toBuilder().statusCode());
+        } catch (SdkClientException e) {
+            logger.error("Not possible to get location for the bucket {}: {}", bucketName, e.getLocalizedMessage());
         }
         return isBucketDeleted;
     }

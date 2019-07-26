@@ -10,13 +10,11 @@ public final class BucketItem {
 
     private final boolean isFile;
 
-    private final String parentBucket;
-
     public BucketItem(String path) {
-        this(null, path, -1, true);
+        this(path, -1, true);
     }
 
-    public BucketItem(String parentBucket, String path, long size, boolean isFile) {
+    public BucketItem(String path, long size, boolean isFile) {
         if (isNull(path)) {
             throw new IllegalArgumentException();
         }
@@ -24,7 +22,6 @@ public final class BucketItem {
         this.path = path;
         this.size = size;
         this.isFile = isFile;
-        this.parentBucket = parentBucket;
     }
 
     public static String getParentFolder(String pathToFile) {
@@ -41,9 +38,5 @@ public final class BucketItem {
 
     public String getPath() {
         return path;
-    }
-
-    public String getParentBucket() {
-        return parentBucket;
     }
 }

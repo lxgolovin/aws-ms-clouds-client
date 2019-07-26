@@ -5,7 +5,9 @@ import com.lxgolovin.clouds.config.Constants;
 import com.lxgolovin.clouds.cloudfs.core.BucketItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -66,13 +68,15 @@ public class BucketAwsS3 {
                     .flatMap(r -> r.contents().stream())
                     .filter(f -> f.key().matches(contentFilter))
                     .forEach(content -> {
-                        boolean isFolder = content.key().matches(".*/$");
-                        BucketItem bucketItem = new BucketItem(bucket, content.key(), content.size(), !isFolder);
+                        boolean isFolder = content.key().matches(Constants.REGEX_IS_FOLDER);
+                        BucketItem bucketItem = new BucketItem(content.key(), content.size(), !isFolder);
                         this.bucketItems.add(bucketItem);
                         bucketSizeTotal += content.size();
                     });
-        } catch (SdkException e) {
-            logger.error("Cannot read bucket {}: {}", bucket, e.toBuilder().message());
+        } catch (AwsServiceException e) {
+            logger.error("Cannot read bucket {}: message {}, code: {}", bucket, e.toBuilder().message(), e.toBuilder().statusCode());
+        } catch (SdkClientException e) {
+            logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
         }
     }
 
@@ -95,14 +99,12 @@ public class BucketAwsS3 {
         ResponseInputStream<GetObjectResponse> responseResponseInputStream = getResponseResponseInputStream(bucketItem);
         int contentLength = responseResponseInputStream.response().contentLength().intValue();
 
-        logger.debug("Buffering file '{}'; size {}", bucketItem.getPath(), contentLength);
         if (contentLength < Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
             targetInputStream = getInputStream(responseResponseInputStream, contentLength);
         } else {
             targetInputStream = new BufferedInputStream(responseResponseInputStream, Constants.DEFAULT_AWS_S3_CHUNK_SIZE);
-//            targetInputStream = new BufferedInputStream(responseResponseInputStream);
         }
-        logger.debug("File {} buffered, length {}", bucketItem.getPath(), contentLength);
+        logger.debug("File buffered size{}, file {}", contentLength, bucketItem.getPath());
 
         return targetInputStream;
     }
@@ -121,10 +123,19 @@ public class BucketAwsS3 {
     }
 
     private ResponseInputStream<GetObjectResponse> getResponseResponseInputStream(BucketItem bucketItem) {
-        // TODO: to handle exceptions
-        return s3.getObject(b ->
-                b.bucket(bucket).key(bucketItem.getPath()),
-                ResponseTransformer.toInputStream());
+        ResponseInputStream<GetObjectResponse> responseResponseInputStream = null;
+
+        try {
+            responseResponseInputStream = s3.getObject(b ->
+                            b.bucket(bucket).key(bucketItem.getPath()),
+                    ResponseTransformer.toInputStream());
+        } catch (AwsServiceException e) {
+            logger.error("Cannot read bucket item {}: message {}, code: {}", bucketItem.getPath(), e.toBuilder().message(), e.toBuilder().statusCode());
+        } catch (SdkClientException e) {
+            logger.error("Cannot read bucket item {}: {}", bucketItem.getPath(), e.getLocalizedMessage());
+        }
+
+        return responseResponseInputStream;
     }
 
     boolean saveBucketItem(BucketItem bucketItem) {
@@ -148,6 +159,10 @@ public class BucketAwsS3 {
             } else {
                 isSaved = createLocalFolder(saveAs);
             }
+        } catch (AwsServiceException e) {
+            logger.error("Cannot save item {}: message {}, code: {}", sourcePath, e.toBuilder().message(), e.toBuilder().statusCode());
+        } catch (SdkClientException e) {
+            logger.error("Cannot save bucket item {}: {}", sourcePath, e.getLocalizedMessage());
         } catch (IOException | SdkException e) {
             logger.error("Cannot save file '{}' to file '{}': File exists {}", sourcePath, saveAs, e.getLocalizedMessage());
         }
@@ -169,8 +184,8 @@ public class BucketAwsS3 {
                 .bucket(bucket)
                 .key(sourceFile)
                 .build();
+            s3.getObject(getObjectRequest, ResponseTransformer.toFile(Paths.get(saveAs)));
 
-        s3.getObject(getObjectRequest, ResponseTransformer.toFile(Paths.get(saveAs)));
         return true;
     }
 
