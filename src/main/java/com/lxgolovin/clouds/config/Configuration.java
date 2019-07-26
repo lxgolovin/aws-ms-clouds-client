@@ -24,6 +24,11 @@ public class Configuration {
 
     private final boolean isProxyUsed;
 
+    private final String awsRegion;
+    private final String awsAccessKeyId;
+    private final String awsSecretAccessKey;
+    private final String awsSessionToken;
+
     public Configuration() {
         this(Constants.DEFAULT_CONFIG_FILE);
     }
@@ -43,6 +48,11 @@ public class Configuration {
         final String PROXY_PORT = "proxy.port";
         final String PROXY_USE = "proxy.use";
 
+        final String AWS_REGION = "aws.region";
+        final String AWS_ACCESS_KEY_ID = "aws.accessKeyId";
+        final String AWS_SECRET_ACCESS_KEY = "aws.secretAccessKey";
+        final String AWS_SESSION_TOKEN = "aws.sessionToken";
+
         readConfigFile(configFilePath);
 
         this.login = oAuthProperties.getProperty(USER_LOGIN);
@@ -54,6 +64,21 @@ public class Configuration {
         this.proxyServer = oAuthProperties.getProperty(PROXY_SERVER);
         this.proxyPort = Integer.valueOf(oAuthProperties.getProperty(PROXY_PORT));
         this.isProxyUsed = (oAuthProperties.getProperty(PROXY_USE).equals("YES"));
+
+        this.awsRegion = oAuthProperties.getProperty(AWS_REGION);
+        this.awsAccessKeyId = oAuthProperties.getProperty(AWS_ACCESS_KEY_ID);
+        this.awsSecretAccessKey = oAuthProperties.getProperty(AWS_SECRET_ACCESS_KEY);
+        this.awsSessionToken = oAuthProperties.getProperty(AWS_SESSION_TOKEN);
+
+        if (this.isProxyUsed) {
+            System.setProperty("http.proxyHost", this.proxyServer);
+            System.setProperty("https.proxyHost", String.valueOf(this.proxyPort));
+            System.setProperty("http.proxyPort", this.proxyServer);
+            System.setProperty("https.proxyPort", String.valueOf(this.proxyPort));
+        }
+        System.setProperty("aws.accessKeyId", this.awsAccessKeyId);
+        System.setProperty("aws.secretAccessKey", this.awsSecretAccessKey);
+        System.setProperty("aws.sessionToken", this.awsSessionToken);
     }
 
     private void readConfigFile(Path configFilePath) {
@@ -90,5 +115,9 @@ public class Configuration {
 
     public boolean isProxyUsed() {
         return isProxyUsed;
+    }
+
+    public String getAwsRegion() {
+        return awsRegion;
     }
 }

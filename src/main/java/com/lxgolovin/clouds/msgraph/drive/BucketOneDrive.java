@@ -14,9 +14,13 @@ import com.microsoft.graph.models.extensions.UploadSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.utils.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,12 +79,13 @@ public class BucketOneDrive {
 
     public BucketItem getFileInfo(String file) {
         BucketItem bucketItem;
+
         try {
             bucketItem = msDriveItemToNode(graphClient
                     .me()
                     .drive()
                     .items(bucket)
-                    .itemWithPath(file)
+                    .itemWithPath(pathToUrl(file))
                     .buildRequest()
                     .get());
         } catch (GraphServiceException e) {
@@ -92,11 +97,22 @@ public class BucketOneDrive {
             }
             bucketItem = new BucketItem(file); // create empty BucketItem
         } catch (ClientException e) {
-            logger.error("Cannot get file {} info: {}", file, e.getLocalizedMessage());
+            logger.error("Not able to read file info: {} : {}", file, e.getLocalizedMessage());
             bucketItem = new BucketItem(file); // create empty BucketItem
         }
 
         return bucketItem;
+    }
+
+    private String pathToUrl(String file) {
+        String fileName = file;
+        try {
+            fileName = URLEncoder.encode(file, StandardCharsets.UTF_8.toString());
+            fileName = fileName.replaceAll("\\+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            logger.error("A character was not found in UTF-8 in file path {}: {}", file, e.getLocalizedMessage());
+        }
+        return fileName;
     }
 
     private BucketItem msDriveItemToNode(DriveItem resultDriveItem) {
@@ -123,7 +139,7 @@ public class BucketOneDrive {
                     .me()
                     .drive()
                     .items(bucket)
-                    .itemWithPath(fileName)
+                    .itemWithPath(pathToUrl(fileName))
                     .buildRequest()
                     .delete();
             deleteResult = true;
@@ -153,14 +169,17 @@ public class BucketOneDrive {
         try {
             int fileSize = inputStream.available();
 
-            if (fileSize <= Constants.ONE_DRIVE_MAX_CONTENT_SIZE) {
+            if (fileSize <= 0) {
+                logger.error("STREAM IS ZERO {}, size {}", fileName, fileSize);
+            } else if (fileSize <= Constants.ONE_DRIVE_MAX_CONTENT_SIZE) {
                 logger.debug("Do NOT create session for file {} size {}", fileName, fileSize);
                 uploadSmallFile(inputStream, fileName, fileSize);
+                uploadResult = true;
             } else {
                 logger.debug("Create session for file {} size {}", fileName, fileSize);
                 uploadLargeFile(inputStream, fileName, fileSize);
+                uploadResult = true;
             }
-            uploadResult = true;
         } catch (GraphServiceException e) {
             logger.error("File '{}' not uploaded.\n Response code: {};\n system response: {}",
                     fileName, e.getResponseCode(), e.getResponseMessage());
@@ -177,7 +196,7 @@ public class BucketOneDrive {
                 .me()
                 .drive()
                 .items(bucket)
-                .itemWithPath(fileName)
+                .itemWithPath(pathToUrl(fileName))
                 .createUploadSession(new DriveItemUploadableProperties())
                 .buildRequest()
                 .post();
@@ -202,7 +221,7 @@ public class BucketOneDrive {
                 .me()
                 .drive()
                 .items(bucket)
-                .itemWithPath(fileName)
+                .itemWithPath(pathToUrl(fileName))
                 .content()
                 .buildRequest()
                 .put(buffer);

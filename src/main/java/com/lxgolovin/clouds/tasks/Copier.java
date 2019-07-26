@@ -63,9 +63,11 @@ public class Copier {
                     boolean isUploaded = bucketOneDrive.upload(bucketAwsS3.readBucketItem(bucketItem), filePath);
                     long fileSizeInMs = bucketOneDrive.getFileInfo(filePath).getSize();
                     if (isUploaded || (fileSizeInMs == fileSize)) {
+                        logger.debug("File uploaded: '{}'; Size: {}", filePath, fileSize);
                         processedFiles.put(filePath, fileSize);
                         unprocessedFiles.remove(filePath);
                     } else {
+                        logger.error("File NOT uploaded: '{}'; Size: {}", filePath, fileSize);
                         processedFiles.remove(filePath);
                         unprocessedFiles.put(filePath, fileSize);
                     }
@@ -92,6 +94,7 @@ public class Copier {
                     .filter(e -> e.getValue() == b.getSize())
                     .anyMatch(e -> (e.getValue() != fileSizeInMs) && bucketOneDrive.delete(file));
         }
+        logger.info("Check if present: {}; file in cloud {}, ", !processFile, b.getPath());
         return processFile;
     }
 

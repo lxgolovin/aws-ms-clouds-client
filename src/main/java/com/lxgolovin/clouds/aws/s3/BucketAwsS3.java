@@ -95,13 +95,14 @@ public class BucketAwsS3 {
         ResponseInputStream<GetObjectResponse> responseResponseInputStream = getResponseResponseInputStream(bucketItem);
         int contentLength = responseResponseInputStream.response().contentLength().intValue();
 
-        logger.debug("Buffering file '{}'", bucketItem.getPath());
+        logger.debug("Buffering file '{}'; size {}", bucketItem.getPath(), contentLength);
         if (contentLength < Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
             targetInputStream = getInputStream(responseResponseInputStream, contentLength);
         } else {
             targetInputStream = new BufferedInputStream(responseResponseInputStream, Constants.DEFAULT_AWS_S3_CHUNK_SIZE);
+//            targetInputStream = new BufferedInputStream(responseResponseInputStream);
         }
-        logger.debug("File {} buffered", bucketItem.getPath());
+        logger.debug("File {} buffered, length {}", bucketItem.getPath(), contentLength);
 
         return targetInputStream;
     }

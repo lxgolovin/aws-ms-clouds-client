@@ -28,5 +28,5 @@ public final class Constants {
     public static final int HTTP_RESPONSE_NOT_FOUND = 404;
 
 //    public static Region DEFAULT_AWS_REGION = Region.EU_CENTRAL_1;
-    public static Region DEFAULT_AWS_REGION = Region.US_EAST_1;
+//    public static Region DEFAULT_AWS_REGION = Region.US_EAST_1;
 }
