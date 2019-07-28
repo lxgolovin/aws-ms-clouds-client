@@ -62,8 +62,11 @@ public class BucketOneDrive {
                     .getCurrentPage();
 
             driveItems.stream()
-                    .filter(di -> di.name.matches(regex))
-                    .forEach(di -> bucketItems.add(msDriveItemToNode(di)));
+                    .filter(driveItem -> driveItem.name.matches(regex))
+                    .forEach(driveItem -> {
+                        BucketItem bucketItem = msDriveItemToNode(driveItem);
+                        bucketItems.add(bucketItem);
+                    });
         } catch (ClientException e) {
             logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
         }
@@ -72,7 +75,7 @@ public class BucketOneDrive {
     }
 
     public BucketItem getFileInfo(String file) {
-        BucketItem bucketItem;
+        BucketItem bucketItem = null;
 
         try {
             bucketItem = msDriveItemToNode(graphClient
@@ -84,18 +87,16 @@ public class BucketOneDrive {
                     .get());
         } catch (GraphServiceException e) {
             if (e.getResponseCode() == Constants.HTTP_RESPONSE_NOT_FOUND) {
-                logger.info("File '{}' not found.\n Response code: {};\n system response: {}",
+                logger.info("Not found: File '{}'. Response code: {}; system response: {}",
                         file, e.getResponseCode(), e.getResponseMessage());
             } else {
                 logger.error("Cannot get file {} info: {}", file, e.getResponseMessage());
             }
-            bucketItem = new BucketItem(file); // create empty BucketItem
         } catch (ClientException e) {
             logger.error("Not able to read file info: {} : {}", file, e.getLocalizedMessage());
-            bucketItem = new BucketItem(file); // create empty BucketItem
         }
 
-        return bucketItem;
+        return (bucketItem == null) ? new BucketItem(file) : bucketItem;
     }
 
     private String pathToUrl(String file) {
@@ -113,17 +114,17 @@ public class BucketOneDrive {
         return fileName;
     }
 
-    private BucketItem msDriveItemToNode(DriveItem resultDriveItem) {
+    private BucketItem msDriveItemToNode(DriveItem driveItem) {
         BucketItem bucketItem = null;
-        if (resultDriveItem != null) {
-            String path = resultDriveItem.parentReference.path.replaceAll("(/drive/root:)", "");
-            path = path.concat("/").concat(resultDriveItem.name);
+        if (driveItem != null) {
+            String path = driveItem.parentReference.path.replaceAll("(/drive/root:)", "");
+            path = path.concat("/").concat(driveItem.name);
             // TODO: to be implemented in future: String parentBucket = resultDriveItem.parentReference.driveId;
-            boolean isFolder = (resultDriveItem.folder == null);
+            boolean isFolder = (driveItem.folder == null);
 
             bucketItem = new BucketItem(
                     path,
-                    resultDriveItem.size,
+                    driveItem.size,
                     isFolder);
         }
         return bucketItem;
@@ -142,10 +143,10 @@ public class BucketOneDrive {
             deleteResult = true;
         } catch (GraphServiceException e) {
             if (e.getResponseCode() == Constants.HTTP_RESPONSE_NOT_FOUND) {
-                logger.info("File '{}' not found.\n Response code: {};\n system response: {}",
+                logger.info("Not deleted: File '{}'. Response code: {}; system response: {}",
                         fileName, e.getResponseCode(), e.getResponseMessage());
             } else {
-                logger.error("Cannot get file {} info: {}", fileName, e.getResponseMessage());
+                logger.error("Cannot delete file {} info: {}", fileName, e.getResponseMessage());
             }
         }
 
@@ -153,39 +154,50 @@ public class BucketOneDrive {
     }
 
     public boolean upload(InputStream inputStream, String fileName) {
+        boolean isUploaded = false;
+        try {
+            int retry = 0;
+            while (!isUploaded | (retry < Constants.RETRY_TIMES)) {
+                isUploaded = upload(inputStream, fileName, inputStream.available());
+                retry++;
+            }
+        } catch (IOException e) {
+            logger.error("IO error during file upload {}. Try later. {}", fileName, e.getLocalizedMessage());
+        }
+
+        return isUploaded;
+    }
+
+    private boolean upload(InputStream inputStream, String fileName, int fileSize) {
         if (fileName == null)  {
             throw new IllegalArgumentException();
         }
 
-        if (inputStream == null) {
+        if ((inputStream == null) || (fileSize <= 0)) {
+            logger.error("No input data. Check connection. File: {}, size {}", fileName, fileSize);
             return false;
         }
 
-        boolean uploadResult = false;
-
+        boolean isUploaded = false;
         try {
-            int fileSize = inputStream.available();
-
-            if (fileSize <= 0) {
-                logger.error("STREAM IS ZERO {}, size {}", fileName, fileSize);
-            } else if (fileSize <= Constants.ONE_DRIVE_MAX_CONTENT_SIZE) {
+            if (fileSize <= Constants.ONE_DRIVE_MAX_CONTENT_SIZE) {
                 logger.debug("Do NOT create session for file {} size {}", fileName, fileSize);
                 uploadSmallFile(inputStream, fileName, fileSize);
-                uploadResult = true;
             } else {
                 logger.debug("Create session for file {} size {}", fileName, fileSize);
                 uploadLargeFile(inputStream, fileName, fileSize);
-                uploadResult = true;
             }
+            isUploaded = true;
         } catch (GraphServiceException e) {
-            logger.error("File '{}' not uploaded.\n Response code: {};\n system response: {}",
+            logger.error("Not uploaded: File '{}'. Response code: {}; system response: {}",
                     fileName, e.getResponseCode(), e.getResponseMessage());
         } catch (ClientException e) {
             logger.error("Unable to upload file {}. {}", fileName, e.getLocalizedMessage());
         } catch (IOException e) {
             logger.error("IO error during file upload {}. Try later. {}", fileName, e.getLocalizedMessage());
         }
-        return uploadResult;
+
+        return isUploaded;
     }
 
     private void uploadLargeFile(InputStream inputStream, String fileName, int fileSize) throws IOException {

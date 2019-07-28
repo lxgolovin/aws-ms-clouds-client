@@ -6,7 +6,7 @@ public final class BucketItem {
 
     private final String path;
 
-    private final long size;
+    private final int size;
 
     private final boolean isFile;
 
@@ -15,6 +15,11 @@ public final class BucketItem {
     }
 
     public BucketItem(String path, long size, boolean isFile) {
+        this(path, (int) size, isFile);
+
+    }
+
+    private BucketItem(String path, int size, boolean isFile) {
         if (isNull(path)) {
             throw new IllegalArgumentException();
         }
@@ -28,7 +33,7 @@ public final class BucketItem {
         return (pathToFile == null) ? "" : pathToFile.replaceAll("(.*)/.*", "$1");
     }
 
-    public long getSize() {
+    public int getSize() {
         return size;
     }
 

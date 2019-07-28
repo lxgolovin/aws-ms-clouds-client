@@ -11,7 +11,7 @@ public final class Constants {
 
     public static final String DEFAULT_CHARSET = "UTF-8";
 
-    public static final int DEFAULT_AWS_S3_CHUNK_SIZE = 8 * 1024 * 1024;
+    public static final int DEFAULT_BUFFER_SIZE = 64 * 1024;
 
     public static final int ONE_DRIVE_MAX_CONTENT_SIZE = 4 * 1024 * 1024;
 
@@ -26,4 +26,6 @@ public final class Constants {
     static final String DEFAULT_AWS_REGION = "eu-central-1";
 
     public static final String REGEX_IS_FOLDER = ".*/$";
+
+    public static int RETRY_TIMES = 3;
 }

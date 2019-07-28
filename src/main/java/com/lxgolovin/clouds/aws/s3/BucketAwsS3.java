@@ -13,14 +13,10 @@ import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.Objects.isNull;
 
@@ -47,11 +43,12 @@ public class BucketAwsS3 {
         this.bucket = bucketName;
 
         logger.debug("Initialize bucket {} with prefix {}", this.bucket, prefix);
-        initBucket(prefix, Constants.DEFAULT_FILTER);
+        initBucket(prefix);
     }
 
-    private void initBucket(String prefix, String filter) {
-        String contentFilter = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
+    private void initBucket(String prefix) {
+        // TODO: filter will be implemented: String contentFilter = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
+        String contentFilter = Constants.DEFAULT_FILTER;
         this.bucketItems = new HashSet<>();
         this.bucketSizeTotal = 0;
 
@@ -98,15 +95,40 @@ public class BucketAwsS3 {
         InputStream targetInputStream;
         ResponseInputStream<GetObjectResponse> responseResponseInputStream = getResponseResponseInputStream(bucketItem);
         int contentLength = responseResponseInputStream.response().contentLength().intValue();
-
-        if (contentLength < Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
+        if (bucketItem.getSize() < Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
             targetInputStream = getInputStream(responseResponseInputStream, contentLength);
         } else {
-            targetInputStream = new BufferedInputStream(responseResponseInputStream, Constants.DEFAULT_AWS_S3_CHUNK_SIZE);
+            targetInputStream = getInputStreamBuffered(responseResponseInputStream, contentLength);
         }
-        logger.debug("File buffered size{}, file {}", contentLength, bucketItem.getPath());
-
+        logger.debug("Buffering finished. Size {}", bucketItem.getSize());
         return targetInputStream;
+    }
+
+    private InputStream getInputStreamBuffered(ResponseInputStream<GetObjectResponse> responseResponseInputStream, int contentLength) {
+        BufferedInputStream bis = new BufferedInputStream(responseResponseInputStream);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        byte[] buffer = new byte[Constants.DEFAULT_BUFFER_SIZE];
+        int len;
+        int byteReadCount = 0;
+
+        logger.info("Reading file 0 of {}", contentLength);
+        while (true) {
+            try {
+                len = bis.read(buffer);
+                if (len != -1) {
+                    break;
+                }
+
+                byteReadCount += len;
+                logger.info("Reading {} of {}", byteReadCount, contentLength);
+                baos.write(buffer, 0, len);
+            } catch (IOException e) {
+                logger.error("IO error. cannot read incoming data. {}", e.getLocalizedMessage());
+                break;
+            }
+        }
+        return new ByteArrayInputStream(baos.toByteArray());
     }
 
     private InputStream getInputStream(InputStream inputStream, int size) {
@@ -184,7 +206,7 @@ public class BucketAwsS3 {
                 .bucket(bucket)
                 .key(sourceFile)
                 .build();
-            s3.getObject(getObjectRequest, ResponseTransformer.toFile(Paths.get(saveAs)));
+        s3.getObject(getObjectRequest, ResponseTransformer.toFile(Paths.get(saveAs)));
 
         return true;
     }
