@@ -1,12 +1,14 @@
 package com.lxgolovin.clouds.cloudfs.core;
 
+import java.io.Serializable;
+
 import static java.util.Objects.isNull;
 
-public final class BucketItem {
+public final class BucketItem implements Serializable {
 
     private final String path;
 
-    private final int size;
+    private final long size;
 
     private final boolean isFile;
 
@@ -14,12 +16,11 @@ public final class BucketItem {
         this(path, -1, true);
     }
 
+    //public BucketItem(String path, int size, boolean isFile) {
+    //    this(path, (long) size, isFile);
+    //}
+
     public BucketItem(String path, long size, boolean isFile) {
-        this(path, (int) size, isFile);
-
-    }
-
-    private BucketItem(String path, int size, boolean isFile) {
         if (isNull(path)) {
             throw new IllegalArgumentException();
         }
@@ -33,7 +34,7 @@ public final class BucketItem {
         return (pathToFile == null) ? "" : pathToFile.replaceAll("(.*)/.*", "$1");
     }
 
-    public int getSize() {
+    public long getSize() {
         return size;
     }
 

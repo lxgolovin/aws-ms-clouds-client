@@ -1,6 +1,7 @@
 package com.lxgolovin.clouds.aws.s3;
 
 import com.lxgolovin.clouds.aws.client.Client;
+import com.lxgolovin.clouds.config.Configuration;
 import com.lxgolovin.clouds.config.Constants;
 import com.lxgolovin.clouds.cloudfs.core.BucketItem;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -22,13 +24,17 @@ import static java.util.Objects.isNull;
 
 public class BucketAwsS3 {
 
-    private final S3Client s3;
+    private S3Client s3;
 
     private Set<BucketItem> bucketItems;
 
     private final String bucket;
 
     private long bucketSizeTotal;
+
+    private long filesCount;
+
+    private final Map<String, Set<BucketItem>> bucketsStateMap;
 
     private Logger logger = LoggerFactory.getLogger(BucketAwsS3.class);
 
@@ -42,39 +48,89 @@ public class BucketAwsS3 {
         this.s3 = (s3Client == null) ? Client.getS3Client() : s3Client;
         this.bucket = bucketName;
 
-        logger.debug("Initialize bucket {} with prefix {}", this.bucket, prefix);
+        bucketsStateMap = readBucketState();
         initBucket(prefix);
     }
 
-    private void initBucket(String prefix) {
-        // TODO: filter will be implemented: String contentFilter = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
-        String contentFilter = Constants.DEFAULT_FILTER;
-        this.bucketItems = new HashSet<>();
-        this.bucketSizeTotal = 0;
+    private void saveBucketState() {
+        // TODO: need to put to separate class
+        Path path = Paths.get(new Configuration().getAwsBucketStatePath());
+        try (OutputStream outputStream = Files.newOutputStream(path);
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
 
-        ListObjectsV2Request listReq = ListObjectsV2Request
-                .builder()
-                .bucket(bucket)
-                .prefix(prefix)
-                .maxKeys(1)
-                .build();
-
-        try {
-            s3.listObjectsV2Paginator(listReq)
-                    .stream()
-                    .flatMap(r -> r.contents().stream())
-                    .filter(f -> f.key().matches(contentFilter))
-                    .forEach(content -> {
-                        boolean isFolder = content.key().matches(Constants.REGEX_IS_FOLDER);
-                        BucketItem bucketItem = new BucketItem(content.key(), content.size(), !isFolder);
-                        this.bucketItems.add(bucketItem);
-                        bucketSizeTotal += content.size();
-                    });
-        } catch (AwsServiceException e) {
-            logger.error("Cannot read bucket {}: message {}, code: {}", bucket, e.toBuilder().message(), e.toBuilder().statusCode());
-        } catch (SdkClientException e) {
-            logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
+            objectOutputStream.writeObject(bucketsStateMap);
+            objectOutputStream.flush();
+        } catch (IOException e) {
+            logger.error("Cannot save state for the bucket items: {}", e.getLocalizedMessage());
+            throw new IllegalAccessError();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Set<BucketItem>> readBucketState() {
+        Map<String, Set<BucketItem>> map;
+        Path path = Paths.get(new Configuration().getAwsBucketStatePath());
+
+        try (InputStream inputStream = Files.newInputStream(path);
+             ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
+
+            map = (Map<String, Set<BucketItem>>) objectInputStream.readObject();
+        } catch (Exception e) {
+            logger.info("Cannot read state for the bucket items {}", e.getLocalizedMessage());
+            map = new HashMap<>();
+        }
+
+        return map;
+    }
+
+    private void initBucket(String prefix) {
+        if (bucketsStateMap.containsKey(prefix)) {
+            bucketItems = bucketsStateMap.get(prefix);
+            bucketSizeTotal = bucketItems
+                    .stream()
+                    .filter(BucketItem::isFile)
+                    .mapToLong(BucketItem::getSize)
+                    .sum();
+
+        } else {
+            // TODO: filter will be implemented: String contentFilter = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
+            String contentFilter = Constants.DEFAULT_FILTER;
+            this.bucketItems = new HashSet<>();
+            this.bucketSizeTotal = 0;
+
+            logger.debug("Initialize bucket {} with prefix {}", this.bucket, prefix);
+            ListObjectsV2Request listReq = ListObjectsV2Request
+                    .builder()
+                    .bucket(bucket)
+                    .prefix(prefix)
+                    .maxKeys(1)
+                    .build();
+
+            try {
+                s3.listObjectsV2Paginator(listReq)
+                        .stream()
+                        .flatMap(r -> r.contents().stream())
+                        .filter(f -> f.key().matches(contentFilter))
+                        .forEach(content -> {
+                            boolean isFolder = content.key().matches(Constants.REGEX_IS_FOLDER);
+                            BucketItem bucketItem = new BucketItem(content.key(), content.size(), !isFolder);
+                            this.bucketItems.add(bucketItem);
+                            bucketSizeTotal += content.size();
+                        });
+                //if (!bucketsStateMap.containsKey(prefix)) {
+                bucketsStateMap.put(prefix, bucketItems);
+                saveBucketState();
+                //}
+            } catch (AwsServiceException e) {
+                logger.error("Cannot read bucket {}: message {}, code: {}", bucket, e.toBuilder().message(), e.toBuilder().statusCode());
+            } catch (SdkClientException e) {
+                logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
+            }
+        }
+        filesCount = bucketItems
+                .stream()
+                .filter(BucketItem::isFile)
+                .count();
     }
 
     public Set<BucketItem> readBucket() {
@@ -92,15 +148,20 @@ public class BucketAwsS3 {
             return null;
         }
 
-        InputStream targetInputStream;
+        InputStream targetInputStream = null;
         ResponseInputStream<GetObjectResponse> responseResponseInputStream = getResponseResponseInputStream(bucketItem);
-        int contentLength = responseResponseInputStream.response().contentLength().intValue();
-        if (bucketItem.getSize() < Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
-            targetInputStream = getInputStream(responseResponseInputStream, contentLength);
-        } else {
-            targetInputStream = getInputStreamBuffered(responseResponseInputStream, contentLength);
+//        int contentLength = 0;
+        if (responseResponseInputStream != null) {
+            int contentLength = responseResponseInputStream.response().contentLength().intValue();
+
+            if (bucketItem.getSize() < Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
+                targetInputStream = getInputStream(responseResponseInputStream, contentLength);
+            } else {
+                targetInputStream = getInputStreamBuffered(responseResponseInputStream, contentLength);
+            }
+            logger.debug("Buffering finished. Size {}", bucketItem.getSize());
         }
-        logger.debug("Buffering finished. Size {}", bucketItem.getSize());
+
         return targetInputStream;
     }
 
@@ -111,17 +172,22 @@ public class BucketAwsS3 {
         byte[] buffer = new byte[Constants.DEFAULT_BUFFER_SIZE];
         int len;
         int byteReadCount = 0;
+        int byteReadCountToPrint = 0;
 
-        logger.info("Reading file 0 of {}", contentLength);
+        logger.info("Read done: 0 of {}", contentLength);
         while (true) {
             try {
                 len = bis.read(buffer);
-                if (len != -1) {
+                if (len == -1) {
                     break;
                 }
 
                 byteReadCount += len;
-                logger.info("Reading {} of {}", byteReadCount, contentLength);
+                byteReadCountToPrint += len;
+                if (byteReadCountToPrint > Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
+                    logger.info("Reading done: {} of {}", byteReadCount, contentLength);
+                    byteReadCountToPrint = 0;
+                }
                 baos.write(buffer, 0, len);
             } catch (IOException e) {
                 logger.error("IO error. cannot read incoming data. {}", e.getLocalizedMessage());
@@ -153,6 +219,9 @@ public class BucketAwsS3 {
                     ResponseTransformer.toInputStream());
         } catch (AwsServiceException e) {
             logger.error("Cannot read bucket item {}: message {}, code: {}", bucketItem.getPath(), e.toBuilder().message(), e.toBuilder().statusCode());
+            if (e.toBuilder().statusCode() == 400) {
+                this.s3 = Client.getS3Client();
+            }
         } catch (SdkClientException e) {
             logger.error("Cannot read bucket item {}: {}", bucketItem.getPath(), e.getLocalizedMessage());
         }
@@ -224,7 +293,11 @@ public class BucketAwsS3 {
         return isCreated;
     }
 
-    public int filesCount() {
+    public long filesCount() {
+        return this.filesCount;
+    }
+
+    public int itemsCount() {
         return bucketItems.size();
     }
 

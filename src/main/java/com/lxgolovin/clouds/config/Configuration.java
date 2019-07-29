@@ -32,6 +32,8 @@ public class Configuration {
 
     private final String awsSessionToken;
 
+    private final String awsBucketStatePath;
+
     public Configuration() {
         this(Constants.DEFAULT_CONFIG_FILE);
     }
@@ -55,6 +57,7 @@ public class Configuration {
         final String AWS_ACCESS_KEY_ID = "aws.accessKeyId";
         final String AWS_SECRET_ACCESS_KEY = "aws.secretAccessKey";
         final String AWS_SESSION_TOKEN = "aws.sessionToken";
+        final String AWS_BUCKET_STATE_PATH = "aws.bucketStatePath";
 
         readConfigFile(configFilePath);
 
@@ -77,9 +80,17 @@ public class Configuration {
         this.awsAccessKeyId = oAuthProperties.getProperty(AWS_ACCESS_KEY_ID);
         this.awsSecretAccessKey = oAuthProperties.getProperty(AWS_SECRET_ACCESS_KEY);
         this.awsSessionToken = oAuthProperties.getProperty(AWS_SESSION_TOKEN);
+        this.awsBucketStatePath = oAuthProperties.getProperty(AWS_BUCKET_STATE_PATH);
 
         setProxy();
         setAwsToken();
+        checkProperties();
+    }
+
+    private void checkProperties() {
+        if ((awsBucketStatePath == null) || awsBucketStatePath.isEmpty()) {
+            throw new IllegalArgumentException("Bucket save path should be defined in config file, field 'aws.bucketStatePath'");
+        }
     }
 
     private void setAwsToken() {
@@ -143,5 +154,9 @@ public class Configuration {
 
     public String getAwsRegion() {
         return awsRegion;
+    }
+
+    public String getAwsBucketStatePath() {
+        return awsBucketStatePath;
     }
 }

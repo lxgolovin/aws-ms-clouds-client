@@ -106,7 +106,12 @@ public class BucketOneDrive {
 
         String fileName = file;
         try {
-            fileName = URLEncoder.encode(file, StandardCharsets.UTF_8.toString());
+            fileName = fileName.replaceAll(":", "_COLON_");
+            fileName = fileName.replaceAll("\\?", "_QSIGN_");
+            fileName = fileName.replaceAll("<", "_LESSSIGN_");
+            fileName = fileName.replaceAll(">", "_MORESIGN_");
+            fileName = fileName.replaceAll("\\s/", "/");
+            fileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
             fileName = fileName.replaceAll("\\+", "%20");
         } catch (UnsupportedEncodingException e) {
             logger.error("A character was not found in UTF-8 in file path {}: {}", file, e.getLocalizedMessage());
@@ -157,7 +162,11 @@ public class BucketOneDrive {
         boolean isUploaded = false;
         try {
             int retry = 0;
-            while (!isUploaded | (retry < Constants.RETRY_TIMES)) {
+            while (!isUploaded & (retry < Constants.RETRY_TIMES)) {
+                if (inputStream == null) {
+                    logger.error("No input data. Check connection. File: {}", fileName);
+                    break;
+                }
                 isUploaded = upload(inputStream, fileName, inputStream.available());
                 retry++;
             }
@@ -201,11 +210,12 @@ public class BucketOneDrive {
     }
 
     private void uploadLargeFile(InputStream inputStream, String fileName, int fileSize) throws IOException {
+        String pathToUrl = pathToUrl(fileName);
         UploadSession uploadSession = graphClient
                 .me()
                 .drive()
                 .items(bucket)
-                .itemWithPath(pathToUrl(fileName))
+                .itemWithPath(pathToUrl)
                 .createUploadSession(new DriveItemUploadableProperties())
                 .buildRequest()
                 .post();
@@ -226,11 +236,12 @@ public class BucketOneDrive {
             b = inputStream.read(buffer);
         }
 
+        String pathToUrl = pathToUrl(fileName);
         graphClient
                 .me()
                 .drive()
                 .items(bucket)
-                .itemWithPath(pathToUrl(fileName))
+                .itemWithPath(pathToUrl)
                 .content()
                 .buildRequest()
                 .put(buffer);
