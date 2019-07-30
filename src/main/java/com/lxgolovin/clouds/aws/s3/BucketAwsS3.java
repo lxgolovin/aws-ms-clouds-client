@@ -85,47 +85,9 @@ public class BucketAwsS3 {
 
     private void initBucket(String prefix) {
         if (bucketsStateMap.containsKey(prefix)) {
-            bucketItems = bucketsStateMap.get(prefix);
-            bucketSizeTotal = bucketItems
-                    .stream()
-                    .filter(BucketItem::isFile)
-                    .mapToLong(BucketItem::getSize)
-                    .sum();
-
+            initPreSavedBucket(prefix);
         } else {
-            // TODO: filter will be implemented: String contentFilter = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
-            String contentFilter = Constants.DEFAULT_FILTER;
-            this.bucketItems = new HashSet<>();
-            this.bucketSizeTotal = 0;
-
-            logger.debug("Initialize bucket {} with prefix {}", this.bucket, prefix);
-            ListObjectsV2Request listReq = ListObjectsV2Request
-                    .builder()
-                    .bucket(bucket)
-                    .prefix(prefix)
-                    .maxKeys(1)
-                    .build();
-
-            try {
-                s3.listObjectsV2Paginator(listReq)
-                        .stream()
-                        .flatMap(r -> r.contents().stream())
-                        .filter(f -> f.key().matches(contentFilter))
-                        .forEach(content -> {
-                            boolean isFolder = content.key().matches(Constants.REGEX_IS_FOLDER);
-                            BucketItem bucketItem = new BucketItem(content.key(), content.size(), !isFolder);
-                            this.bucketItems.add(bucketItem);
-                            bucketSizeTotal += content.size();
-                        });
-                //if (!bucketsStateMap.containsKey(prefix)) {
-                bucketsStateMap.put(prefix, bucketItems);
-                saveBucketState();
-                //}
-            } catch (AwsServiceException e) {
-                logger.error("Cannot read bucket {}: message {}, code: {}", bucket, e.toBuilder().message(), e.toBuilder().statusCode());
-            } catch (SdkClientException e) {
-                logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
-            }
+            initRealTimeBucket(prefix);
         }
         filesCount = bucketItems
                 .stream()
@@ -133,100 +95,159 @@ public class BucketAwsS3 {
                 .count();
     }
 
+    private void initRealTimeBucket(String prefix) {
+        // TODO: filter will be implemented: String contentFilter = (isNull(filter)) ? Constants.DEFAULT_CLOUD_FS_FILTER : filter;
+        String contentFilter = Constants.DEFAULT_CLOUD_FS_FILTER;
+        this.bucketItems = new HashSet<>();
+        this.bucketSizeTotal = 0;
+
+        logger.debug("Initialize bucket {} with prefix {}", this.bucket, prefix);
+        ListObjectsV2Request listReq = ListObjectsV2Request
+                .builder()
+                .bucket(bucket)
+                .prefix(prefix)
+                .maxKeys(1)
+                .build();
+
+        try {
+            s3.listObjectsV2Paginator(listReq)
+                    .stream()
+                    .flatMap(r -> r.contents().stream())
+                    .filter(f -> f.key().matches(contentFilter))
+                    .forEach(content -> {
+                        boolean isFolder = content.key().matches(Constants.REGEX_IS_FOLDER);
+                        BucketItem bucketItem = new BucketItem(content.key(), content.size(), !isFolder);
+                        this.bucketItems.add(bucketItem);
+                        bucketSizeTotal += content.size();
+                    });
+            //if (!bucketsStateMap.containsKey(prefix)) {
+            bucketsStateMap.put(prefix, bucketItems);
+            saveBucketState();
+            //}
+        } catch (AwsServiceException e) {
+            logger.error("Cannot read bucket {}: message {}, code: {}", bucket, e.toBuilder().message(), e.toBuilder().statusCode());
+        } catch (SdkClientException e) {
+            logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
+        }
+    }
+
+    private void initPreSavedBucket(String prefix) {
+        bucketItems = bucketsStateMap.get(prefix);
+        bucketSizeTotal = bucketItems
+                .stream()
+                .filter(BucketItem::isFile)
+                .mapToLong(BucketItem::getSize)
+                .sum();
+    }
+
     public Set<BucketItem> readBucket() {
         return bucketItems;
     }
 
-    public InputStream readBucketItem(BucketItem bucketItem) {
+    public InputStream readBucketItem(BucketItem bucketItem) throws IllegalArgumentException {
         ifIllegalNull(bucketItem, "Bucket item cannot be null");
 
         if (!bucketItems.contains(bucketItem)) {
             throw new IllegalArgumentException("Item is not present in the bucket");
         }
 
-        if (!bucketItem.isFile()) {
-            return null;
-        }
+//        if (!bucketItem.isFile()) {
+//            return null;
+//        }
 
         InputStream targetInputStream = null;
-        ResponseInputStream<GetObjectResponse> responseResponseInputStream = getResponseResponseInputStream(bucketItem);
-//        int contentLength = 0;
-        if (responseResponseInputStream != null) {
-            int contentLength = responseResponseInputStream.response().contentLength().intValue();
+        try {
+            ResponseInputStream<GetObjectResponse> responseResponseInputStream = getResponseResponseInputStream(bucketItem);
+            long contentLength = responseResponseInputStream.response().contentLength();
 
-            if (bucketItem.getSize() < Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
-                targetInputStream = getInputStream(responseResponseInputStream, contentLength);
-            } else {
-                targetInputStream = getInputStreamBuffered(responseResponseInputStream, contentLength);
-            }
+//            targetInputStream = getInputStreamBuffered(responseResponseInputStream, contentLength);
+            targetInputStream = getInputStreamBuffered(responseResponseInputStream, contentLength);
             logger.debug("Buffering finished. Size {}", bucketItem.getSize());
+        } catch (AwsServiceException e) {
+            logger.error("Cannot read bucket item {}: message {}, code: {}", bucketItem.getPath(), e.toBuilder().message(), e.toBuilder().statusCode());
+            if (e.toBuilder().statusCode() == Constants.AWS_TOKEN_EXPIRED) {
+                this.s3 = Client.getS3Client();
+            }
+        } catch (SdkClientException e) {
+            logger.error("Cannot read bucket item {}: {}", bucketItem.getPath(), e.getLocalizedMessage());
+        } catch (IOException e) {
+            logger.error("IO error. cannot read incoming data. {}", e.getLocalizedMessage());
+        } catch (OutOfMemoryError e) {
+            logger.error("File is too large {}MB. Not supported yet: {}", bucketItem.getSize()/(1024*1024), e.getLocalizedMessage());
         }
 
         return targetInputStream;
     }
 
-    private InputStream getInputStreamBuffered(ResponseInputStream<GetObjectResponse> responseResponseInputStream, int contentLength) {
+    private InputStream getInputStreamBuffered(ResponseInputStream<GetObjectResponse> responseResponseInputStream, long contentLength)
+            throws IOException, OutOfMemoryError {
         BufferedInputStream bis = new BufferedInputStream(responseResponseInputStream);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        byte[] buffer = new byte[Constants.DEFAULT_BUFFER_SIZE];
+        if (contentLength > 1*1024*1024*1024) { // GB
+            return null;
+        }
+
+        byte[] buffer = new byte[Constants.DOWNLOAD_BUFFER_SIZE];
         int len;
         int byteReadCount = 0;
         int byteReadCountToPrint = 0;
 
         logger.info("Read done: 0 of {}", contentLength);
         while (true) {
-            try {
-                len = bis.read(buffer);
-                if (len == -1) {
-                    break;
-                }
-
-                byteReadCount += len;
-                byteReadCountToPrint += len;
-                if (byteReadCountToPrint > Constants.MAXIMUM_AWS_S3_CHUNK_SIZE) {
-                    logger.info("Reading done: {} of {}", byteReadCount, contentLength);
-                    byteReadCountToPrint = 0;
-                }
-                baos.write(buffer, 0, len);
-            } catch (IOException e) {
-                logger.error("IO error. cannot read incoming data. {}", e.getLocalizedMessage());
+            len = bis.read(buffer);
+            if (len == -1) {
                 break;
             }
+
+            byteReadCount += len;
+            byteReadCountToPrint += len;
+            if (byteReadCountToPrint > Constants.PRINTABLE_CHUNK_SIZE) {
+                logger.info("Reading done: {} of {}", byteReadCount, contentLength);
+                byteReadCountToPrint = 0;
+            }
+            baos.write(buffer, 0, len);
         }
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
-    private InputStream getInputStream(InputStream inputStream, int size) {
-        byte[] buffer = new byte[size];
-        try {
-            int b = 0;
-            while (b != -1) {
-                b = inputStream.read(buffer);
+    private InputStream getInputStream(InputStream inputStream, long size) throws IOException, OutOfMemoryError {
+        BufferedInputStream bis = new BufferedInputStream(inputStream);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        List<InputStream> dataSet = new ArrayList<>();
+
+        byte[] buffer = new byte[Constants.DOWNLOAD_BUFFER_SIZE];
+        int len;
+        int byteReadCount = 0;
+        int byteReadCountPrintable = 0;
+
+        logger.info("Read done: 0 of {}", size);
+        while (true) {
+            len = bis.read(buffer);
+            if (len == -1) {
+                break;
             }
-        } catch (IOException e) {
-            logger.error("Buffer IO error. {}", e.getLocalizedMessage());
+
+            byteReadCount += len;
+            byteReadCountPrintable += len;
+            if (byteReadCountPrintable > Constants.PRINTABLE_CHUNK_SIZE) {
+                logger.info("Reading done: {} of {}", byteReadCount, size);
+                byteReadCountPrintable = 0;
+            }
+
+            baos.write(buffer, 0, len);
+            if (baos.size() > (Constants.MAX_BUFFER_SIZE-Constants.DOWNLOAD_BUFFER_SIZE)) {
+                dataSet.add(new ByteArrayInputStream(baos.toByteArray()));
+                baos = new ByteArrayOutputStream();
+            }
         }
-        return new ByteArrayInputStream(buffer);
+        dataSet.add(new ByteArrayInputStream(baos.toByteArray()));
+        return new SequenceInputStream(Collections.enumeration(dataSet));
     }
 
-    private ResponseInputStream<GetObjectResponse> getResponseResponseInputStream(BucketItem bucketItem) {
-        ResponseInputStream<GetObjectResponse> responseResponseInputStream = null;
-
-        try {
-            responseResponseInputStream = s3.getObject(b ->
-                            b.bucket(bucket).key(bucketItem.getPath()),
-                    ResponseTransformer.toInputStream());
-        } catch (AwsServiceException e) {
-            logger.error("Cannot read bucket item {}: message {}, code: {}", bucketItem.getPath(), e.toBuilder().message(), e.toBuilder().statusCode());
-            if (e.toBuilder().statusCode() == 400) {
-                this.s3 = Client.getS3Client();
-            }
-        } catch (SdkClientException e) {
-            logger.error("Cannot read bucket item {}: {}", bucketItem.getPath(), e.getLocalizedMessage());
-        }
-
-        return responseResponseInputStream;
+    private ResponseInputStream<GetObjectResponse> getResponseResponseInputStream(BucketItem bucketItem)
+            throws AwsServiceException, SdkClientException {
+        return s3.getObject(b -> b.bucket(bucket).key(bucketItem.getPath()), ResponseTransformer.toInputStream());
     }
 
     boolean saveBucketItem(BucketItem bucketItem) {
@@ -261,8 +282,9 @@ public class BucketAwsS3 {
         return isSaved;
     }
 
-    private boolean processSaveFile(String sourceFile, String saveAs) throws IOException {
-        if (Files.exists(Paths.get(saveAs))) {
+    private boolean processSaveFile(String sourceFile, String saveAs) throws IOException, AwsServiceException, SdkClientException {
+        Path path = Paths.get(saveAs);
+        if (Files.exists(path)) {
             logger.warn("Target file '{}' already present, skip source file {}", saveAs, sourceFile);
             return false;
         }
@@ -277,20 +299,18 @@ public class BucketAwsS3 {
                 .build();
         s3.getObject(getObjectRequest, ResponseTransformer.toFile(Paths.get(saveAs)));
 
-        return true;
+        return Files.exists(path);
     }
 
     private boolean createLocalFolder(String saveAs) throws IOException {
-        boolean isCreated = false;
-
-        if (Files.exists(Paths.get(saveAs))) {
+        Path path = Paths.get(saveAs);
+        if (Files.exists(path)) {
             logger.warn("Target folder '{}' already present, skip source folder", saveAs);
-        } else {
-            Files.createDirectories(Paths.get(saveAs));
-            isCreated = true;
+            return false;
         }
 
-        return isCreated;
+        Files.createDirectories(path);
+        return Files.exists(path);
     }
 
     public long filesCount() {

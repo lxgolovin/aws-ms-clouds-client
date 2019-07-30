@@ -65,7 +65,7 @@ public class Configuration {
         this.password = oAuthProperties.getProperty(USER_PASSWORD);
 
         this.appId = oAuthProperties.getProperty(APP_ID);
-        this.appScopes = oAuthProperties.getProperty(APP_SCOPES).split(Constants.DEFAULT_SEPARATOR);
+        this.appScopes = oAuthProperties.getProperty(APP_SCOPES).split(Constants.DEFAULT_CONFIG_FILE_SEPARATOR);
 
         this.proxyServer = oAuthProperties.getProperty(PROXY_SERVER);
         this.proxyPort = Integer.valueOf(oAuthProperties.getProperty(PROXY_PORT));

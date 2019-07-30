@@ -30,7 +30,7 @@ public class BucketOneDrive {
 
     private final String bucket;
 
-    private final IGraphServiceClient graphClient;
+    private IGraphServiceClient graphClient;
 
     private Logger logger = LoggerFactory.getLogger(BucketOneDrive.class);
 
@@ -48,8 +48,8 @@ public class BucketOneDrive {
     }
 
     public Set<BucketItem> readBucket() {
-        // TODO: need to implement filter as a param: String regex = (isNull(filter)) ? Constants.DEFAULT_FILTER : filter;
-        final String regex = Constants.DEFAULT_FILTER;
+        // TODO: need to implement filter as a param: String regex = (isNull(filter)) ? Constants.DEFAULT_CLOUD_FS_FILTER : filter;
+        final String regex = Constants.DEFAULT_CLOUD_FS_FILTER;
         this.bucketItems = new HashSet<>();
         try {
             List<DriveItem> driveItems =  graphClient
@@ -200,8 +200,11 @@ public class BucketOneDrive {
         } catch (GraphServiceException e) {
             logger.error("Not uploaded: File '{}'. Response code: {}; system response: {}",
                     fileName, e.getResponseCode(), e.getResponseMessage());
+            if (e.getResponseCode() == Constants.ONE_DRIVE_TOKEN_EXPIRED) {
+                this.graphClient = Client.getMsGraphClient();
+            }
         } catch (ClientException e) {
-            logger.error("Unable to upload file {}. {}", fileName, e.getLocalizedMessage());
+            logger.error("Unable to upload file {}. {}, e", fileName, e.getLocalizedMessage(), e.fillInStackTrace());
         } catch (IOException e) {
             logger.error("IO error during file upload {}. Try later. {}", fileName, e.getLocalizedMessage());
         }

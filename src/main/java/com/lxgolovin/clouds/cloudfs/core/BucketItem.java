@@ -16,10 +16,6 @@ public final class BucketItem implements Serializable {
         this(path, -1, true);
     }
 
-    //public BucketItem(String path, int size, boolean isFile) {
-    //    this(path, (long) size, isFile);
-    //}
-
     public BucketItem(String path, long size, boolean isFile) {
         if (isNull(path)) {
             throw new IllegalArgumentException();

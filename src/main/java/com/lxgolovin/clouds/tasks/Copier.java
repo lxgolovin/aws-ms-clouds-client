@@ -42,7 +42,7 @@ public class Copier {
             throw new IllegalArgumentException("BucketAwsS3 name cannot be null");
         }
 
-        String copyFilter = (filter == null) ? Constants.DEFAULT_FILTER : filter;
+        String copyFilter = (filter == null) ? Constants.DEFAULT_CLOUD_FS_FILTER : filter;
 
 
         processedFiles = readState(Paths.get(bucketNameAws + "_" + Constants.DEFAULT_SAVE_STATE_DIRECTORY));
@@ -83,7 +83,8 @@ public class Copier {
     private boolean needToProcessBucketItem(BucketItem b) {
         boolean processFile;
         long fileSizeInMs = bucketOneDrive.getFileInfo(b.getPath()).getSize();
-        if (fileSizeInMs < 0) {
+//        if (fileSizeInMs < 0) {
+        if (fileSizeInMs < Constants.PRINTABLE_CHUNK_SIZE) {
             processFile = true;
         } else {
             String file = b.getPath();

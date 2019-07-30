@@ -60,3 +60,4 @@ TEMP/
 oAuth.properties
 logs/
 App.java
+*.state
