@@ -106,10 +106,10 @@ public class BucketOneDrive {
 
         String fileName = file;
         try {
-            fileName = fileName.replaceAll(":", "_COLON_");
-            fileName = fileName.replaceAll("\\?", "_QSIGN_");
-            fileName = fileName.replaceAll("<", "_LESSSIGN_");
-            fileName = fileName.replaceAll(">", "_MORESIGN_");
+            fileName = fileName.replaceAll(":", "_");
+            fileName = fileName.replaceAll("\\?", "_");
+            fileName = fileName.replaceAll("<", "_");
+            fileName = fileName.replaceAll(">", "_");
             fileName = fileName.replaceAll("\\s/", "/");
             fileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
             fileName = fileName.replaceAll("\\+", "%20");

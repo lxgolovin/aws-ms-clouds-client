@@ -81,22 +81,15 @@ public class Copier {
     }
 
     private boolean needToProcessBucketItem(BucketItem b) {
-        boolean processFile;
         long fileSizeInMs = bucketOneDrive.getFileInfo(b.getPath()).getSize();
-//        if (fileSizeInMs < 0) {
-        if (fileSizeInMs < Constants.PRINTABLE_CHUNK_SIZE) {
-            processFile = true;
-        } else {
-            String file = b.getPath();
+        //        if (fileSizeInMs < Constants.PRINTABLE_CHUNK_SIZE) {
+        boolean processFile = ((fileSizeInMs < 0) || (fileSizeInMs != b.getSize())) || processedFiles
+                .entrySet()
+                .stream()
+                .filter(e -> e.getKey().equals(b.getPath()))
+                .anyMatch(e -> e.getValue() != b.getSize());
 
-            processFile = processedFiles
-                    .entrySet()
-                    .stream()
-                    .filter(e -> e.getKey().equals(file))
-                    .filter(e -> e.getValue() == b.getSize())
-                    .anyMatch(e -> (e.getValue() != fileSizeInMs) && bucketOneDrive.delete(file));
-        }
-        logger.info("Check if present: {}; file in cloud {}, ", !processFile, b.getPath());
+        logger.info("Check if present: {}; file in cloud {}, {} vs {}", !processFile, b.getPath(), b.getSize(), fileSizeInMs);
         return processFile;
     }
 

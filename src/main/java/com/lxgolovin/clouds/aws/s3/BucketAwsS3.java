@@ -184,9 +184,9 @@ public class BucketAwsS3 {
         BufferedInputStream bis = new BufferedInputStream(responseResponseInputStream);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        if (contentLength > 1*1024*1024*1024) { // GB
-            return null;
-        }
+//        if (contentLength > 1*1024*1024*1024) { // GB
+//            return null;
+//        }
 
         byte[] buffer = new byte[Constants.DOWNLOAD_BUFFER_SIZE];
         int len;
