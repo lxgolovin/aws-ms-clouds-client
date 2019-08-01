@@ -9,11 +9,7 @@ public final class Constants {
 
     static final String DEFAULT_CONFIG_FILE_SEPARATOR = ",";
 
-    public static final String DEFAULT_CHARSET = "UTF-8";
-
     public static final int DOWNLOAD_BUFFER_SIZE = 64 * 1024;
-
-    public static final int MAX_BUFFER_SIZE = 1024*1024*1024; // 500 MB
 
     public static final int ONE_DRIVE_MAX_CONTENT_SIZE = 4 * 1024 * 1024;
 
@@ -30,8 +26,6 @@ public final class Constants {
     public static final int ONE_DRIVE_TOKEN_EXPIRED = 401;
 
     static final String DEFAULT_AWS_REGION = "eu-central-1";
-
-    public static final String REGEX_IS_FOLDER = ".*/$";
 
     public static int RETRY_TIMES = 3;
 }

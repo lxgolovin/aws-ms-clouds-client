@@ -3,7 +3,6 @@ package com.lxgolovin.clouds.msgraph.client;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.lxgolovin.clouds.config.Configuration;
-import com.lxgolovin.clouds.config.Constants;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.core.DefaultClientConfig;
 import com.microsoft.graph.core.IClientConfig;
@@ -17,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 class AuthenticateInsecure {
 
@@ -89,7 +89,7 @@ class AuthenticateInsecure {
             conn.setInstanceFollowRedirects(false);
             conn.connect();
 
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(conn.getOutputStream(), Constants.DEFAULT_CHARSET);
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
             String payload = String.format("grant_type=%1$s&resource=%2$s&client_id=%3$s&username=%4$s&password=%5$s",
                     grantType,
                     resourceId,

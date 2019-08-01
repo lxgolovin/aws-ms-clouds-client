@@ -20,14 +20,9 @@ public class TestsBase {
     // s3 testing constants and tools
     public static final String folderName = "TEMP/NewFolder/NewFolder";
 
-//    public static final String fileName = "TEMP/NewFolder/NewFolder/apache-maven-3.6.1-bin.tar.gz";
-//    static final String fileName = "TEMP/Instr2.mp4";
     public static final String fileName = "TEMP/go1.12.7.windows-amd64.msi";
 
     public static final String bucket = "01XHM6HBUOKVNQM2MZERGLFEJ3FITM4CTP"; //Test upload folder
-//    static final String bucket = "01XHM6HBV6Y2GOVW7725BZO354PWSELRRZ"; //Test upload folder
-
-    public static final String filter = ".*gradle.*";
 
     public static final Region region = Region.EU_CENTRAL_1;
 
@@ -42,7 +37,7 @@ public class TestsBase {
         deleteDirectory(Paths.get(path));
     }
 
-    public static void deleteDirectory(Path path) throws IOException {
+    private static void deleteDirectory(Path path) throws IOException {
         assertNotNull(path);
         if (path.toFile().exists()) {
             Files.walk(path)
