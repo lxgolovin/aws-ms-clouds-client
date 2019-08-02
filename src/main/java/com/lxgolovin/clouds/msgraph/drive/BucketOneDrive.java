@@ -68,7 +68,7 @@ public class BucketOneDrive {
                         bucketItems.add(bucketItem);
                     });
         } catch (ClientException e) {
-            logger.error("Cannot read bucket {}: {}", bucket, e.getLocalizedMessage());
+            logger.error("Cannot read bucket {}: {}", bucket, e);
         }
 
         return bucketItems;
@@ -76,13 +76,16 @@ public class BucketOneDrive {
 
     public BucketItem getFileInfo(String file) {
         BucketItem bucketItem = null;
+        String pathToUrl = pathToUrl(file);
+
+        logger.debug("Checking file: {}", pathToUrl);
 
         try {
             bucketItem = msDriveItemToNode(graphClient
                     .me()
                     .drive()
                     .items(bucket)
-                    .itemWithPath(pathToUrl(file))
+                    .itemWithPath(pathToUrl)
                     .buildRequest()
                     .get());
         } catch (GraphServiceException e) {
@@ -90,10 +93,10 @@ public class BucketOneDrive {
                 logger.info("Not found: File '{}'. Response code: {}; system response: {}",
                         file, e.getResponseCode(), e.getResponseMessage());
             } else {
-                logger.error("Cannot get file {} info: {}", file, e.getResponseMessage());
+                logger.error("Cannot get file {} info: {}, {}", file, e.getResponseCode(), e.getResponseMessage());
             }
         } catch (ClientException e) {
-            logger.error("Not able to read file info: {} : {}", file, e.getLocalizedMessage());
+            logger.error("Not able to read file info: {} : {}", file, e);
         }
 
         return (bucketItem == null) ? new BucketItem(file) : bucketItem;
@@ -106,13 +109,14 @@ public class BucketOneDrive {
 
         String fileName = file;
         try {
-            fileName = fileName.replaceAll(":", "_");
-            fileName = fileName.replaceAll("\\?", "_");
-            fileName = fileName.replaceAll("<", "_");
-            fileName = fileName.replaceAll(">", "_");
+            fileName = fileName.replaceAll(".+(Vivelo\\s1E\\sDEVELOPMENT.+)", "GECMS/NONPRODUCT_CONTENTS/$1");
+            fileName = fileName.replaceAll(".+(Dawson,\\sDicho\\sy\\shecho\\s8e\\sMedia\\sEdition.+)", "GECMS/NONPRODUCT_CONTENTS/$1");
+
+            fileName = fileName.replaceAll("[:><&]", "_");
             fileName = fileName.replaceAll("\\s/", "/");
             fileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
             fileName = fileName.replaceAll("\\+", "%20");
+            fileName = fileName.replaceAll("%3F", "_");
         } catch (UnsupportedEncodingException e) {
             logger.error("A character was not found in UTF-8 in file path {}: {}", file, e.getLocalizedMessage());
         }
@@ -151,7 +155,7 @@ public class BucketOneDrive {
                 logger.info("Not deleted: File '{}'. Response code: {}; system response: {}",
                         fileName, e.getResponseCode(), e.getResponseMessage());
             } else {
-                logger.error("Cannot delete file {} info: {}", fileName, e.getResponseMessage());
+                logger.error("Cannot delete file {} info: {}", fileName, e);
             }
         }
 
@@ -171,7 +175,7 @@ public class BucketOneDrive {
                 retry++;
             }
         } catch (IOException e) {
-            logger.error("IO error during file upload {}. Try later. {}", fileName, e.getLocalizedMessage());
+            logger.error("IO error during file upload {}. Try later. {}", fileName, e);
         }
 
         return isUploaded;
@@ -196,10 +200,12 @@ public class BucketOneDrive {
                 logger.debug("Create session for file {} size {}", fileName, fileSize);
                 uploadLargeFile(inputStream, fileName, fileSize);
             }
+            logger.debug("{}, {}", pathToUrl(fileName).length(), pathToUrl(fileName));
             isUploaded = true;
         } catch (GraphServiceException e) {
-            logger.error("Not uploaded: File '{}'. Response code: {}; system response: {}",
-                    fileName, e.getResponseCode(), e.getResponseMessage());
+            logger.debug("New file name: {}, {}", pathToUrl(fileName).length(), pathToUrl(fileName));
+            logger.error("Not uploaded: File '{}'. Response code: {}; system response: {}, {}",
+                    fileName, e.getResponseCode(), e.getResponseMessage(), e);
             if (e.getResponseCode() == Constants.ONE_DRIVE_TOKEN_EXPIRED) {
                 this.graphClient = Client.getMsGraphClient();
             }
