@@ -4,7 +4,9 @@ import com.lxgolovin.clouds.config.Configuration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
-public class Client {
+public final class Client {
+
+    private Client() {}
 
     public static S3Client getS3Client() {
         return getS3Client(null);

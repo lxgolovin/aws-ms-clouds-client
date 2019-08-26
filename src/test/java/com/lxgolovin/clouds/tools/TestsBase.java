@@ -15,20 +15,22 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TestsBase {
+public final class TestsBase {
+
+    private TestsBase() {}
 
     // s3 testing constants and tools
-    public static final String folderName = "TEMP/NewFolder/NewFolder";
+    public static final String FOLDER_NAME = "TEMP/NewFolder/NewFolder";
 
-    public static final String fileName = "TEMP/apache-maven-3.6.1-bin.tar.gz";
+    public static final String FILE_NAME = "TEMP/apache-maven-3.6.1-bin.tar.gz";
 
     public static final String bucket = "01XHM6HBUOKVNQM2MZERGLFEJ3FITM4CTP"; //Test upload folder
 
-    public static final Region region = Region.EU_CENTRAL_1;
+    public static final Region REGION = Region.EU_CENTRAL_1;
 
-    public static final String existingBucketName = "company-saleselm-10001";
+    public static final String EXISTING_BUCKET_NAME = "company-saleselm-10001";
 
-    public static final String bucketName = "bucket" + UUID.randomUUID();
+    public static final String BUCKET_NAME = "bucket" + UUID.randomUUID();
 
     public static final String TEMP_FOLDER = "TEMP_FOLDER";
 

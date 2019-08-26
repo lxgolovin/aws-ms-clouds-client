@@ -15,7 +15,7 @@ public class BucketManager {
 
     private final S3Client s3;
 
-    private Logger logger = LoggerFactory.getLogger(BucketManager.class);
+    private final Logger logger = LoggerFactory.getLogger(BucketManager.class);
 
     public BucketManager() {
         this(Client.getS3Client());

@@ -18,7 +18,7 @@ import static java.util.Objects.isNull;
 
 public class Copier {
 
-    private static Logger logger = LoggerFactory.getLogger(Copier.class);
+    private final Logger logger = LoggerFactory.getLogger(Copier.class);
 
     private Map<String, Long> processedFiles;
     private Map<String, Long> unprocessedFiles = new HashMap<>();

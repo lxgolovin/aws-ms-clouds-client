@@ -38,10 +38,8 @@ public class Configuration {
         this(Constants.DEFAULT_CONFIG_FILE);
     }
 
-    public Configuration(Path configFilePath) {
-        if (configFilePath == null) {
-            configFilePath = Constants.DEFAULT_CONFIG_FILE;
-        }
+    Configuration(Path path) {
+        Path configFilePath = (path == null) ? Constants.DEFAULT_CONFIG_FILE : path;
 
         final String APP_ID = "app.id";
         final String APP_SCOPES = "app.scopes";
@@ -69,7 +67,7 @@ public class Configuration {
 
         this.proxyServer = oAuthProperties.getProperty(PROXY_SERVER);
         this.proxyPort = Integer.valueOf(oAuthProperties.getProperty(PROXY_PORT));
-        this.isProxyUsed = (oAuthProperties.getProperty(PROXY_USE).equals("YES"));
+        this.isProxyUsed = "YES".equals(oAuthProperties.getProperty(PROXY_USE));
 
         String awsRegion = oAuthProperties.getProperty(AWS_REGION);
         if (awsRegion == null) {
@@ -136,7 +134,7 @@ public class Configuration {
         return password;
     }
 
-    public String[] getAppScopes() {
+    String[] getAppScopes() {
         return appScopes;
     }
 

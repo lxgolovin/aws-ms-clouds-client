@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BucketAwsS3ManagerTest {
 
-    private static final S3Client s3 = Client.getS3Client(TestsBase.region);
+    private static final S3Client s3 = Client.getS3Client(TestsBase.REGION);
 
-    private final String bucket = TestsBase.bucketName;
+    private final String bucket = TestsBase.BUCKET_NAME;
 
     private BucketManager bucketManager = new BucketManager(s3);
 
@@ -44,9 +44,9 @@ class BucketAwsS3ManagerTest {
 
     @Test
     void createNonEmptyBucket() {
-//        assertTrue(bucketManager.createBucket(bucket));
-//        putFakeObjects();
-//        assertFalse(bucketManager.deleteBucket(bucket));
+        assertTrue(bucketManager.createBucket(bucket));
+        putFakeObjects();
+        assertFalse(bucketManager.deleteBucket(bucket));
         // TODO: test to delete not empty bucket
     }
 
