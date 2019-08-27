@@ -43,13 +43,7 @@ public class Copier {
         }
 
         String copyFilter = (filter == null) ? Constants.DEFAULT_CLOUD_FS_FILTER : filter;
-
-
         processedFiles = readState(Paths.get(bucketNameAws + "_" + Constants.DEFAULT_SAVE_STATE_DIRECTORY));
-        logger.debug("Read bucketAwsS3 '{}':", bucketNameAws);
-        logger.debug("Number of items: {}", bucketAwsS3.itemsCount());
-        logger.debug("Number of files: {}", bucketAwsS3.filesCount());
-        logger.debug("Total: {} bytes; {} MB", bucketAwsS3.sizeTotalBytes(), bucketAwsS3.sizeTotalBytes()/(1024*1024));
 
         bucketAwsS3.readBucket()
                 .stream()
@@ -119,5 +113,9 @@ public class Copier {
         }
 
         return map;
+    }
+
+    public BucketAwsS3 getBucketAwsS3() {
+        return bucketAwsS3;
     }
 }

@@ -109,14 +109,15 @@ public class BucketOneDrive {
 
         String fileName = file;
         try {
-            fileName = fileName.replaceAll(".+(Vivelo\\s1E\\sDEVELOPMENT.+)", "GECMS/NONPRODUCT_CONTENTS/$1");
-            fileName = fileName.replaceAll(".+(Dawson,\\sDicho\\sy\\shecho\\s8e\\sMedia\\sEdition.+)", "GECMS/NONPRODUCT_CONTENTS/$1");
-
-            fileName = fileName.replaceAll("[:><&]", "_");
+            fileName = fileName.replaceAll("\\.[Ee][Xx][Ee]$", "\\._exe_");
+            fileName = fileName.replaceAll("[:><]", "_");
             fileName = fileName.replaceAll("\\s/", "/");
+            fileName = fileName.replaceAll("/\\s", "/");
+            fileName = fileName.replaceAll("\\?", "_");
+            fileName = fileName.replaceAll("~", "_");
+            fileName = fileName.replaceAll("\\$", "_");
             fileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
             fileName = fileName.replaceAll("\\+", "%20");
-            fileName = fileName.replaceAll("%3F", "_");
         } catch (UnsupportedEncodingException e) {
             logger.error("A character was not found in UTF-8 in file path {}: {}", file, e.getLocalizedMessage());
         }
