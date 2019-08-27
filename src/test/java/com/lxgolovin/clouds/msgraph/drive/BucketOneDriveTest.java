@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BucketOneDriveTest {
 
-    private final String fileName = TestsBase.fileName;
+    private final String fileName = TestsBase.FILE_NAME;
 
     private BucketOneDrive bucketOneDrive;
 
@@ -43,7 +43,7 @@ class BucketOneDriveTest {
         assertTrue(bucketOneDrive.getFileInfo(fileName).isFile());
         assertTrue(bucketOneDrive.delete(fileName));
 
-        assertFalse(bucketOneDrive.getFileInfo(TestsBase.folderName).isFile());
+        assertFalse(bucketOneDrive.getFileInfo(TestsBase.FOLDER_NAME).isFile());
     }
 
     @Test

@@ -36,7 +36,7 @@ public class BucketAwsS3 {
 
     private final Map<String, Set<BucketItem>> bucketsStateMap;
 
-    private Logger logger = LoggerFactory.getLogger(BucketAwsS3.class);
+    private final Logger logger = LoggerFactory.getLogger(BucketAwsS3.class);
 
     public BucketAwsS3(String bucket, String prefix) {
         this(Client.getS3Client(), bucket, prefix);
@@ -220,7 +220,7 @@ public class BucketAwsS3 {
         }
 
         String sourcePath = bucketItem.getPath();
-        String saveAs = (isNull(targetDir)) ? sourcePath : targetDir.concat("/").concat(sourcePath);
+        String saveAs = (isNull(targetDir)) ? sourcePath : targetDir + "/" + sourcePath;
 
         boolean isSaved = false;
         logger.debug("Processing source item '{}'", sourcePath);

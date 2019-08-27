@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BucketAwsS3Test {
 
-    private final BucketAwsS3 bucketAwsS3 = new BucketAwsS3(Client.getS3Client(TestsBase.region), TestsBase.existingBucketName, null);
+    private final BucketAwsS3 bucketAwsS3 = new BucketAwsS3(Client.getS3Client(TestsBase.REGION), TestsBase.EXISTING_BUCKET_NAME, null);
 
     private Set<BucketItem> bucketItems;
 
@@ -30,7 +30,7 @@ class BucketAwsS3Test {
     void nullChecked() {
         assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(null, null));
         assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(null, null, null));
-        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(Client.getS3Client(TestsBase.region), null, null));
+        assertThrows(IllegalArgumentException.class, () -> new BucketAwsS3(Client.getS3Client(TestsBase.REGION), null, null));
     }
 
     @Test

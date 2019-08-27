@@ -128,7 +128,7 @@ public class BucketOneDrive {
         BucketItem bucketItem = null;
         if (driveItem != null) {
             String path = driveItem.parentReference.path.replaceAll("(/drive/root:)", "");
-            path = path.concat("/").concat(driveItem.name);
+            path = path + "/" + driveItem.name;
             // TODO: to be implemented in future: String parentBucket = resultDriveItem.parentReference.driveId;
             boolean isFolder = (driveItem.folder == null);
 
