@@ -32,12 +32,9 @@ class BucketOneDriveTest {
     }
 
     @Test
-    void getFileInfoByPathAndDeleteFile() {
+    void getFileInfoByPathAndDeleteFile() throws IOException {
         try (InputStream uploadFileStream = Files.newInputStream(Paths.get(fileName))) {
             assertTrue(bucketOneDrive.upload(uploadFileStream, fileName));
-        } catch (IOException e) {
-            // TODO: to be replaced with own exception
-            throw new Error("BucketOneDrive cannot be accessed: " + e.getLocalizedMessage());
         }
 
         assertNotNull(bucketOneDrive.getFileInfo(fileName));
@@ -48,12 +45,9 @@ class BucketOneDriveTest {
     }
 
     @Test
-    void upload() {
+    void upload() throws IOException {
         try (InputStream uploadFileStream = Files.newInputStream(Paths.get(fileName))) {
             assertTrue(bucketOneDrive.upload(uploadFileStream, fileName));
-        } catch (IOException e) {
-            // TODO: to be replaced with own exception
-            throw new Error("BucketOneDrive cannot be accessed: " + e.getLocalizedMessage());
         }
         assertTrue(bucketOneDrive.delete(fileName));
     }

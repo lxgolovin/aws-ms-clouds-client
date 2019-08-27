@@ -68,7 +68,6 @@ public class Copier {
                     }
                 });
 
-        // TODO: remove this line after debugging
         processedFiles.forEach((k, v) -> logger.debug("File '{}', size '{}' processed", k, v));
         unprocessedFiles.forEach((k, v) -> logger.debug("File '{}', size '{}' NOT processed", k, v));
         saveState(processedFiles, Paths.get(bucketNameAws + "_" + Constants.DEFAULT_SAVE_STATE_DIRECTORY));
@@ -76,7 +75,6 @@ public class Copier {
 
     private boolean needToProcessBucketItem(BucketItem b) {
         long fileSizeInMs = bucketOneDrive.getFileInfo(b.getPath()).getSize();
-        //        if (fileSizeInMs < Constants.PRINTABLE_CHUNK_SIZE) {
         boolean processFile = ((fileSizeInMs < 0) || (fileSizeInMs != b.getSize())) || processedFiles
                 .entrySet()
                 .stream()
@@ -95,7 +93,6 @@ public class Copier {
             objectOutputStream.flush();
         } catch (IOException e) {
             logger.error("Cannot save state of copying {}: {}", path.toUri(), e.getLocalizedMessage());
-            throw new IllegalAccessError();
         }
     }
 
@@ -113,9 +110,5 @@ public class Copier {
         }
 
         return map;
-    }
-
-    public BucketAwsS3 getBucketAwsS3() {
-        return bucketAwsS3;
     }
 }

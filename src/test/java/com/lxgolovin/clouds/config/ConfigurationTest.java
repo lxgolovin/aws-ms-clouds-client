@@ -1,6 +1,5 @@
 package com.lxgolovin.clouds.config;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -8,10 +7,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class ConfigurationTest {
 
     private final Configuration configuration = new Configuration();
-
-    @BeforeEach
-    void setUp() {
-    }
 
     @Test
     void nullTests() {

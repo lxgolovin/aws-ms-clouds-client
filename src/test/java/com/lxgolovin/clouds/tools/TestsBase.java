@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -42,9 +43,10 @@ public final class TestsBase {
     private static void deleteDirectory(Path path) throws IOException {
         assertNotNull(path);
         if (path.toFile().exists()) {
-            Files.walk(path)
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(f -> assertTrue(f.toFile().delete()));
+            try (Stream<Path> dirTree = Files.walk(path)) {
+                dirTree.sorted(Comparator.reverseOrder())
+                        .forEach(f -> assertTrue(f.toFile().delete()));
+            }
         }
 
         assertFalse(Files.exists(path), "Directory is present");

@@ -62,7 +62,6 @@ public class BucketAwsS3 {
             objectOutputStream.flush();
         } catch (IOException e) {
             logger.error("Cannot save state for the bucket items: {}", e.getLocalizedMessage());
-            throw new IllegalAccessError();
         }
     }
 
@@ -178,30 +177,31 @@ public class BucketAwsS3 {
 
     private InputStream getInputStreamBuffered(ResponseInputStream<GetObjectResponse> responseResponseInputStream, long contentLength)
             throws IOException, OutOfMemoryError {
-        BufferedInputStream bis = new BufferedInputStream(responseResponseInputStream);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (BufferedInputStream bis = new BufferedInputStream(responseResponseInputStream);
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
-        byte[] buffer = new byte[Constants.DOWNLOAD_BUFFER_SIZE];
-        int len;
-        int byteReadCount = 0;
-        int byteReadCountToPrint = 0;
+            byte[] buffer = new byte[Constants.DOWNLOAD_BUFFER_SIZE];
+            int len;
+            int byteReadCount = 0;
+            int byteReadCountToPrint = 0;
 
-        logger.info("Read done: 0 of {}", contentLength);
-        while (true) {
-            len = bis.read(buffer);
-            if (len == -1) {
-                break;
+            logger.info("Read done: 0 of {}", contentLength);
+            while (true) {
+                len = bis.read(buffer);
+                if (len == -1) {
+                    break;
+                }
+
+                byteReadCount += len;
+                byteReadCountToPrint += len;
+                if (byteReadCountToPrint > Constants.PRINTABLE_CHUNK_SIZE) {
+                    logger.info("Reading done: {} of {}", byteReadCount, contentLength);
+                    byteReadCountToPrint = 0;
+                }
+                baos.write(buffer, 0, len);
             }
-
-            byteReadCount += len;
-            byteReadCountToPrint += len;
-            if (byteReadCountToPrint > Constants.PRINTABLE_CHUNK_SIZE) {
-                logger.info("Reading done: {} of {}", byteReadCount, contentLength);
-                byteReadCountToPrint = 0;
-            }
-            baos.write(buffer, 0, len);
+            return new ByteArrayInputStream(baos.toByteArray());
         }
-        return new ByteArrayInputStream(baos.toByteArray());
     }
 
     private ResponseInputStream<GetObjectResponse> getResponseResponseInputStream(BucketItem bucketItem)

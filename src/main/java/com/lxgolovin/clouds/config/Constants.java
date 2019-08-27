@@ -9,8 +9,6 @@ public final class Constants {
 
     static final Path DEFAULT_CONFIG_FILE = Paths.get("src/main/resources/oAuth.properties");
 
-    static final String DEFAULT_CONFIG_FILE_SEPARATOR = ",";
-
     public static final int DOWNLOAD_BUFFER_SIZE = 64 * 1024;
 
     public static final int ONE_DRIVE_MAX_CONTENT_SIZE = 4 * 1024 * 1024;
@@ -29,5 +27,5 @@ public final class Constants {
 
     static final String DEFAULT_AWS_REGION = "eu-central-1";
 
-    public static int RETRY_TIMES = 3;
+    public static final int RETRY_TIMES = 3;
 }

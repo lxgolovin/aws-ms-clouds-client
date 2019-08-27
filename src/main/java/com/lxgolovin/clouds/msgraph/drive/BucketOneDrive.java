@@ -109,6 +109,7 @@ public class BucketOneDrive {
 
         String fileName = file;
         try {
+            // These filters were asked by the customer
             fileName = fileName.replaceAll("\\.[Ee][Xx][Ee]$", "\\._exe_");
             fileName = fileName.replaceAll("[:><]", "_");
             fileName = fileName.replaceAll("\\s/", "/");

@@ -10,6 +10,7 @@ import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -48,19 +49,14 @@ class AuthenticateInsecure {
         GetAuthenticatedClient();
     }
 
-
     private void GetAuthenticatedClient() {
-        try {
-            accessToken = GetAccessToken().replace("\"", "");
+        accessToken = GetAccessToken().replace("\"", "");
 
-            IAuthenticationProvider mAuthenticationProvider =
-                    request -> request.addHeader("Authorization","Bearer " + accessToken);
-            IClientConfig mClientConfig = DefaultClientConfig.createWithAuthenticationProvider(mAuthenticationProvider);
+        IAuthenticationProvider mAuthenticationProvider =
+                request -> request.addHeader("Authorization","Bearer " + accessToken);
+        IClientConfig mClientConfig = DefaultClientConfig.createWithAuthenticationProvider(mAuthenticationProvider);
 
-            graphClient = GraphServiceClient.fromConfig(mClientConfig);
-        } catch (Exception e) {
-            throw new IllegalAccessError("Unable to create graph client: " + e.getLocalizedMessage());
-        }
+        graphClient = GraphServiceClient.fromConfig(mClientConfig);
     }
 
     private String GetAccessToken() {
@@ -89,24 +85,22 @@ class AuthenticateInsecure {
             conn.setInstanceFollowRedirects(false);
             conn.connect();
 
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
-            String payload = String.format("grant_type=%1$s&resource=%2$s&client_id=%3$s&username=%4$s&password=%5$s",
-                    grantType,
-                    resourceId,
-                    clientId,
-                    username,
-                    password);
-
-            outputStreamWriter.write(payload);
-            outputStreamWriter.close();
+            try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8)) {
+                String payload = String.format("grant_type=%1$s&resource=%2$s&client_id=%3$s&username=%4$s&password=%5$s",
+                        grantType,
+                        resourceId,
+                        clientId,
+                        username,
+                        password);
+                outputStreamWriter.write(payload);
+            }
 
             try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                 while((line = br.readLine()) != null) {
                     jsonString.append(line);
                 }
-            } catch (Exception e) {
-                throw new IllegalAccessError("Unable to read authorization response: " + e.getLocalizedMessage());
             }
+
             conn.disconnect();
 
             JsonObject res = new GsonBuilder()
@@ -118,7 +112,7 @@ class AuthenticateInsecure {
                     .toString()
                     .replaceAll("\"", "");
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new IllegalAccessError("Unable to read authorization response: " + e.getLocalizedMessage());
         }
     }
