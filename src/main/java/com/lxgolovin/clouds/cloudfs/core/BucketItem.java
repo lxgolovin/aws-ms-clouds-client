@@ -18,7 +18,7 @@ public final class BucketItem implements Serializable {
 
     public BucketItem(String path, long size, boolean isFile) {
         if (isNull(path)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Path cannot be null");
         }
 
         this.path = path;

@@ -24,13 +24,13 @@ public final class TestsBase {
 
     public static final String FILE_NAME = "TEMP/apache-maven-3.6.1-bin.tar.gz";
 
-    public static final String bucket = "01XHM6HBUOKVNQM2MZERGLFEJ3FITM4CTP"; //Test upload folder
+    public static final String BUCKET = "01XHM6HBUOKVNQM2MZERGLFEJ3FITM4CTP"; //Test upload folder
 
     public static final Region REGION = Region.EU_CENTRAL_1;
 
     public static final String EXISTING_BUCKET_NAME = "company-saleselm-10001";
 
-    public static final String BUCKET_NAME = "bucket" + UUID.randomUUID();
+    public static final String BUCKET_NAME = "BUCKET" + UUID.randomUUID();
 
     public static final String TEMP_FOLDER = "TEMP_FOLDER";
 

@@ -19,7 +19,7 @@ class BucketOneDriveTest {
 
     @BeforeEach
     void setUp() {
-        bucketOneDrive = new BucketOneDrive(TestsBase.bucket);
+        bucketOneDrive = new BucketOneDrive(TestsBase.BUCKET);
     }
 
     @Test
@@ -36,6 +36,7 @@ class BucketOneDriveTest {
         try (InputStream uploadFileStream = Files.newInputStream(Paths.get(fileName))) {
             assertTrue(bucketOneDrive.upload(uploadFileStream, fileName));
         } catch (IOException e) {
+            // TODO: to be replaced with own exception
             throw new Error("BucketOneDrive cannot be accessed: " + e.getLocalizedMessage());
         }
 
@@ -51,6 +52,7 @@ class BucketOneDriveTest {
         try (InputStream uploadFileStream = Files.newInputStream(Paths.get(fileName))) {
             assertTrue(bucketOneDrive.upload(uploadFileStream, fileName));
         } catch (IOException e) {
+            // TODO: to be replaced with own exception
             throw new Error("BucketOneDrive cannot be accessed: " + e.getLocalizedMessage());
         }
         assertTrue(bucketOneDrive.delete(fileName));

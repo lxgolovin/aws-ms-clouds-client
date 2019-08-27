@@ -32,7 +32,7 @@ public class BucketOneDrive {
 
     private IGraphServiceClient graphClient;
 
-    private Logger logger = LoggerFactory.getLogger(BucketOneDrive.class);
+    private final Logger logger = LoggerFactory.getLogger(BucketOneDrive.class);
 
     public BucketOneDrive(String bucket) {
         this(null, bucket);
@@ -40,7 +40,7 @@ public class BucketOneDrive {
 
     BucketOneDrive(IGraphServiceClient graphClient, String bucket) {
         if (bucket == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Bucket name cannot be null");
         }
 
         this.bucket = bucket;
@@ -184,7 +184,7 @@ public class BucketOneDrive {
 
     private boolean upload(InputStream inputStream, String fileName, int fileSize) {
         if (fileName == null)  {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("File name cannot be null");
         }
 
         if ((inputStream == null) || (fileSize <= 0)) {

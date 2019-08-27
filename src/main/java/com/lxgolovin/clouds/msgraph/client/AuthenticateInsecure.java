@@ -26,9 +26,9 @@ class AuthenticateInsecure {
 
     private final String password;
 
-    private String accessToken = null;
+    private String accessToken;
 
-    private IGraphServiceClient graphClient = null;
+    private IGraphServiceClient graphClient;
 
     private final Configuration configuration = new Configuration();
 

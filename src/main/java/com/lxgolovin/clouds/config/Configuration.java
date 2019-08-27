@@ -16,7 +16,7 @@ public class Configuration {
 
     private final String appId;
 
-    private String[] appScopes;
+    private final String[] appScopes;
 
     private final String proxyServer;
 

@@ -21,7 +21,7 @@ public class Copier {
     private final Logger logger = LoggerFactory.getLogger(Copier.class);
 
     private Map<String, Long> processedFiles;
-    private Map<String, Long> unprocessedFiles = new HashMap<>();
+    private final Map<String, Long> unprocessedFiles = new HashMap<>();
     private final String bucketNameAws;
     private final String bucketNameMs;
     private final BucketAwsS3 bucketAwsS3;

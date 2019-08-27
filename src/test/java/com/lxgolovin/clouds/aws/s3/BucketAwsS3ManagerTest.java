@@ -18,7 +18,7 @@ class BucketAwsS3ManagerTest {
 
     private final String bucket = TestsBase.BUCKET_NAME;
 
-    private BucketManager bucketManager = new BucketManager(s3);
+    private final BucketManager bucketManager = new BucketManager(s3);
 
     @Test
     void nullChecked() {
@@ -47,7 +47,7 @@ class BucketAwsS3ManagerTest {
         assertTrue(bucketManager.createBucket(bucket));
         putFakeObjects();
         assertFalse(bucketManager.deleteBucket(bucket));
-        // TODO: test to delete not empty bucket
+        // TODO: test to delete not empty BUCKET
     }
 
     private void putFakeObjects() {
