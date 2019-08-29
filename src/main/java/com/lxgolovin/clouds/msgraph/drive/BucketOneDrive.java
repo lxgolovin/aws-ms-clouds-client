@@ -125,7 +125,7 @@ public class BucketOneDrive {
         return fileName;
     }
 
-    private BucketItem msDriveItemToNode(DriveItem driveItem) {
+    private static BucketItem msDriveItemToNode(DriveItem driveItem) {
         BucketItem bucketItem = null;
         if (driveItem != null) {
             String path = driveItem.parentReference.path.replaceAll("(/drive/root:)", "");
